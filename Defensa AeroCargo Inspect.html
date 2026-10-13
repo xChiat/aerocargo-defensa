@@ -1,0 +1,1056 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Defensa AeroCargo Inspect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: riel izquierdo fijo con el pipeline de inspección (pasos 1–6); a la derecha, una columna de tarjetas-pregunta con su laboratorio a todo el ancho */
+:root{
+  --bg:#E9EEF1; --surface:#FFFFFF; --surface-2:#E1E8ED; --ink:#12202A; --muted:#566874; --line:#C8D2DA; --grid:#E4E9ED;
+  --accent:#0A6889; --accent-ink:#FFFFFF; --signal:#C97A12;
+  --c0:#2B8554; --c1:#B4760F; --c2:#C2332A;
+  --code-bg:#0F1B23; --code-ink:#D8E3EA; --code-k:#7CC7E8; --code-s:#E9B872; --code-c:#7A8D99; --code-n:#F29A8C; --code-hl:#1E3442;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C141A; --surface:#131E26; --surface-2:#1A2832; --ink:#E1EAF0; --muted:#8FA1AD; --line:#2A3A45; --grid:#1D2B35;
+  --accent:#4FB3D7; --accent-ink:#04131A; --signal:#EFA644;
+  --c0:#4CC08A; --c1:#E3A83D; --c2:#F2675C;
+  --code-bg:#0A1116; --code-ink:#D8E3EA; --code-k:#7CC7E8; --code-s:#E9B872; --code-c:#6E808C; --code-n:#F29A8C; --code-hl:#18303E;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C141A; --surface:#131E26; --surface-2:#1A2832; --ink:#E1EAF0; --muted:#8FA1AD; --line:#2A3A45; --grid:#1D2B35;
+  --accent:#4FB3D7; --accent-ink:#04131A; --signal:#EFA644;
+  --c0:#4CC08A; --c1:#E3A83D; --c2:#F2675C;
+  --code-bg:#0A1116; --code-ink:#D8E3EA; --code-k:#7CC7E8; --code-s:#E9B872; --code-c:#6E808C; --code-n:#F29A8C; --code-hl:#18303E;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:20px;padding-block:20px 80px}
+
+/* ---------- Cabecera ---------- */
+.top{display:grid;gap:18px;padding-block:8px 22px;border-bottom:2px solid var(--ink);margin-bottom:22px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-stretch:118%;font-weight:800;font-size:clamp(28px,4.4vw,48px);line-height:1.02;margin:4px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+.lede{max-width:70ch;color:var(--muted);margin:0}
+.lede b{color:var(--ink);font-weight:600}
+.pipe{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:0;border:1px solid var(--line);background:var(--surface);border-radius:6px;overflow:hidden}
+.pipe a{display:grid;gap:2px;padding:10px 12px;text-decoration:none;color:inherit;border-right:1px solid var(--line);position:relative;min-width:0}
+.pipe a:last-child{border-right:0}
+.pipe a:hover{background:var(--surface-2)}
+.pipe .k{font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.pipe .n{font-family:var(--f-display);font-stretch:110%;font-weight:700;font-size:15px;line-height:1.2}
+.pipe .c{font-family:var(--f-mono);font-size:11px;color:var(--accent)}
+@media (max-width:980px){.pipe{grid-template-columns:repeat(4,minmax(0,1fr))}.pipe a:nth-child(4){border-right:0}.pipe a:nth-child(-n+4){border-bottom:1px solid var(--line)}}
+@media (max-width:520px){.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}.pipe a{border-bottom:1px solid var(--line)}.pipe a:nth-child(2n){border-right:0}}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:10px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.toolbar .grow{flex:1 1 200px;min-width:0}
+.search{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1.2}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.btn.small{padding:5px 9px;font-size:12px}
+.seg{max-width:100%;display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--surface);flex-wrap:wrap}
+.seg button{white-space:normal;text-align:left;border:0;background:transparent;padding:6px 11px;cursor:pointer;font-size:13px;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.tog{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;user-select:none}
+.tog input{position:absolute;opacity:0;width:1px;height:1px}
+.tog .sw{width:34px;height:20px;border-radius:10px;background:var(--line);position:relative;transition:background .2s;flex:none}
+.tog .sw::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--surface);transition:transform .2s}
+.tog input:checked+.sw{background:var(--accent)}
+.tog input:checked+.sw::after{transform:translateX(14px)}
+.tog input:focus-visible+.sw{outline:2px solid var(--accent);outline-offset:2px}
+
+details.rubric{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 16px;margin-bottom:24px}
+details.rubric summary{cursor:pointer;font-weight:600}
+.levels{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:12px}
+.levels div{background:var(--surface-2);border-radius:4px;padding:8px 10px;font-size:13px}
+.levels b{font-family:var(--f-display);font-size:22px;display:block;line-height:1}
+@media (max-width:700px){.levels{grid-template-columns:1fr 1fr}}
+.crit{margin:12px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+
+/* ---------- Estructura ---------- */
+.app{display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;align-items:start}
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 70px);max-height:calc(100vh - 90px);overflow:auto;font-size:13px;padding-right:4px}
+nav.rail h3{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px;font-weight:500}
+nav.rail h3:first-child{margin-top:0}
+nav.rail .qs{display:flex;flex-wrap:wrap;gap:4px}
+nav.rail a{font-family:var(--f-mono);font-size:12px;text-decoration:none;color:var(--ink);padding:3px 6px;border-radius:3px;border:1px solid var(--line);background:var(--surface)}
+nav.rail a:hover{border-color:var(--accent);color:var(--accent)}
+nav.rail a.scored{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+@media (max-width:900px){.app{grid-template-columns:minmax(0,1fr)}nav.rail{display:none}}
+
+section.step{margin-bottom:40px;scroll-margin-top:80px}
+.step-h{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.step-h h2{font-family:var(--f-display);font-stretch:115%;font-weight:750;font-size:26px;margin:0;line-height:1.1}
+.step-h .k{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.step-h p{flex-basis:100%;margin:0;color:var(--muted);max-width:75ch}
+.cards{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+article.q,main,section.step{min-width:0}
+
+article.q{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px 20px 16px;scroll-margin-top:80px;transition:box-shadow .3s}
+article.q.flash{box-shadow:0 0 0 3px var(--accent)}
+.qh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.qn{font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:20px;letter-spacing:.01em}
+.chip{font-family:var(--f-mono);font-size:11px;padding:2px 7px;border-radius:3px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.code{border-color:var(--accent);color:var(--accent)}
+.chip.trans{border-color:var(--signal);color:var(--signal)}
+.qh .sp{flex:1}
+.score{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.score button{width:26px;height:26px;border:1px solid var(--line);background:var(--surface);border-radius:3px;cursor:pointer;font-family:var(--f-mono);font-size:12px;padding:0}
+.score button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.qt{font-size:clamp(17px,1.8vw,20px);line-height:1.45;margin:10px 0 0;max-width:80ch;font-weight:500;text-wrap:pretty}
+.hint{display:flex;gap:8px;align-items:flex-start;margin-top:14px;font-size:14px;color:var(--ink);background:var(--surface-2);border-radius:4px;padding:8px 12px}
+.hint::before{content:"PRUEBA";font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;color:var(--accent);padding-top:3px;flex:none}
+
+.answers{display:grid;gap:8px;margin-top:14px}
+.answers details{border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.answers summary{cursor:pointer;padding:8px 12px;font-size:14px;font-weight:600;list-style:none;display:flex;gap:8px;align-items:center}
+.answers summary::-webkit-details-marker{display:none}
+.answers summary::before{content:"+";font-family:var(--f-mono);color:var(--accent);width:12px}
+.answers details[open] summary::before{content:"−"}
+.answers .body{padding:0 14px 12px 32px;max-width:80ch}
+.answers .body p{margin:0}
+.answers details.ans{border-left:3px solid var(--accent)}
+.answers details.peras{border-left:3px solid var(--signal)}
+
+/* ---------- Laboratorios ---------- */
+.lab{grid-template-columns:minmax(0,1fr);margin-top:14px;border-top:1px dashed var(--line);padding-top:14px;display:grid;gap:14px;min-width:0}
+.ctrls{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.ctl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;flex:1 1 220px;min-width:0;max-width:420px}
+.ctl label{font-size:13px;color:var(--muted)}
+.ctl output{font-family:var(--f-mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.ctl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:0}
+.presets{min-width:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
+.split.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:780px){.split,.split.even{grid-template-columns:minmax(0,1fr)}}
+canvas.cv{width:100%;display:block;border-radius:4px;background:var(--surface-2);touch-action:manipulation}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px}
+.stat{background:var(--surface-2);border-radius:4px;padding:8px 10px;min-width:0}
+.stat .l{font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;font-family:var(--f-mono)}
+.stat .v{font-family:var(--f-display);font-stretch:105%;font-weight:700;font-size:22px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat.ok .v{color:var(--c0)} .stat.warn .v{color:var(--c1)} .stat.bad .v{color:var(--c2)}
+.note{font-size:14px;color:var(--muted);margin:0;max-width:80ch}
+.note b{color:var(--ink)}
+.callout{border-left:3px solid var(--c2);background:var(--surface-2);padding:10px 14px;border-radius:0 4px 4px 0;font-size:14px}
+.callout.ok{border-left-color:var(--c0)} .callout.warn{border-left-color:var(--c1)} .callout.info{border-left-color:var(--accent)}
+.callout b{font-family:var(--f-display);font-size:18px}
+.mbars{display:grid;gap:7px}
+.mbar{display:grid;grid-template-columns:120px minmax(0,1fr) 54px;gap:8px;align-items:center;font-size:13px}
+.mbar .tr{height:12px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.mbar .fi{height:100%;background:var(--muted);transition:width .35s ease}
+.mbar .vv{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.cmwrap{overflow-x:auto}
+.cmgrid{display:grid;grid-template-columns:auto repeat(3,minmax(64px,1fr));gap:3px;min-width:280px}
+.cm-h{font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;padding:4px;text-align:center}
+.cm-h.row{justify-content:flex-end}
+.cm-corner{font-family:var(--f-mono);font-size:10px;color:var(--muted);display:flex;align-items:flex-end;padding:4px}
+.cm-c{border:2px solid transparent;border-radius:3px;padding:10px 4px;cursor:pointer;display:grid;gap:0;justify-items:center;background:color-mix(in srgb,var(--accent) var(--a),var(--surface));color:var(--ink)}
+.cm-c.hi{color:var(--accent-ink)}
+.cm-c b{font-family:var(--f-display);font-size:18px;font-variant-numeric:tabular-nums}
+.cm-c small{font-family:var(--f-mono);font-size:10px;opacity:.75}
+.cm-c.danger{border-color:var(--c2)}
+.cm-c.sel{outline:2px solid var(--ink);outline-offset:1px}
+table.t{border-collapse:collapse;font-size:13px;width:100%;font-variant-numeric:tabular-nums}
+table.t th,table.t td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t th{font-weight:500;color:var(--muted);font-size:12px}
+.tw{overflow-x:auto}
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:4px;padding:12px 14px;margin:0;overflow-x:auto;font-family:var(--f-mono);font-size:12.5px;line-height:1.55;tab-size:4}
+pre.code .k{color:var(--code-k)} pre.code .s{color:var(--code-s)} pre.code .c{color:var(--code-c);font-style:italic} pre.code .n{color:var(--code-n)}
+pre.code .ln{display:block;padding:0 6px;margin:0 -6px;border-radius:2px;transition:background .25s}
+pre.code .ln.on{background:var(--code-hl);box-shadow:inset 3px 0 0 var(--code-k)}
+pre.code .ln.bad{box-shadow:inset 3px 0 0 var(--code-n);background:var(--code-hl)}
+pre.code .ln.good{box-shadow:inset 3px 0 0 #6FCF97}
+.err{font-family:var(--f-mono);font-size:12.5px;background:var(--code-bg);color:var(--code-n);padding:10px 12px;border-radius:4px;white-space:pre-wrap;word-break:break-word}
+.okmsg{font-family:var(--f-mono);font-size:12.5px;background:var(--code-bg);color:#6FCF97;padding:10px 12px;border-radius:4px;white-space:pre-wrap}
+.rules{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.rules li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px;font-size:14px;align-items:start}
+.rules .m{font-family:var(--f-mono);font-weight:600;text-align:center;border-radius:3px;font-size:12px;padding:1px 0}
+.rules .ok .m{background:color-mix(in srgb,var(--c0) 20%,transparent);color:var(--c0)}
+.rules .warn .m{background:color-mix(in srgb,var(--c1) 22%,transparent);color:var(--c1)}
+.rules .bad .m{background:color-mix(in srgb,var(--c2) 20%,transparent);color:var(--c2)}
+.strip{display:flex;gap:2px;flex-wrap:wrap}
+.strip i{width:14px;height:14px;border-radius:2px;display:block}
+.runs{display:grid;gap:6px}
+.run{display:grid;grid-template-columns:150px minmax(0,1fr) 70px;gap:8px;align-items:center;font-size:12px}
+@media (max-width:600px){.run{grid-template-columns:minmax(0,1fr)}}
+.blocks{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+@media (max-width:640px){.blocks{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.blk{border:2px solid var(--line);border-radius:4px;padding:10px 8px;cursor:pointer;background:var(--surface);text-align:left;display:grid;gap:2px;min-width:0}
+.blk .bn{font-family:var(--f-mono);font-weight:600;font-size:13px}
+.blk .bp{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.blk .bs{font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+.blk.frozen{background:var(--surface-2)} .blk.frozen .bs{color:var(--muted)}
+.blk.train{border-color:var(--accent)} .blk.train .bs{color:var(--accent);font-weight:600}
+.rail2{height:8px;border-radius:4px;position:relative;background:var(--surface-2)}
+.rail2 i{position:absolute;top:0;bottom:0;border-radius:4px;transition:left .3s,width .3s}
+.zones{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.zone{border:2px dashed var(--line);border-radius:6px;padding:10px;min-height:120px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.zone h4{flex-basis:100%;margin:0 0 4px;font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--muted);font-weight:500}
+.dev{border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:6px 10px;cursor:pointer;font-family:var(--f-mono);font-size:12px}
+.dev:hover{border-color:var(--accent)}
+.stage-list{display:grid;gap:6px}
+.neurons{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.neu{width:30px;height:30px;border-radius:50%;border:2px solid var(--accent);display:grid;place-items:center;font-family:var(--f-mono);font-size:11px;transition:all .3s}
+.mini-cm{display:inline-grid;gap:2px}
+.mini-cm i{width:16px;height:16px;background:var(--surface-2);border-radius:2px;display:block}
+.mini-cm i.d{background:color-mix(in srgb,var(--accent) 45%,var(--surface))}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:13px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-family:var(--f-mono)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:3px;display:inline-block;border-radius:2px}
+.legend i.sq{height:12px;width:12px}
+.oplog{font-family:var(--f-mono);font-size:12px;background:var(--code-bg);color:var(--code-ink);border-radius:4px;padding:8px 10px;min-height:150px;display:grid;align-content:start;gap:2px;overflow:hidden}
+.oplog .bad{color:var(--code-n)} .oplog .dim{color:var(--code-c)}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+footer{margin-top:40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:14px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Visión por Computador · Unidad 2 · Evaluación sumativa</div>
+      <h1>Defensa AeroCargo Inspect</h1>
+      <p class="lede">Las <b>31 preguntas de defensa</b> y el <b>banco adicional</b> del caso de drones que inspeccionan techos de contenedores (0 Intacto · 1 Óxido · 2 Daño crítico). Cada pregunta trae un laboratorio: mueve los parámetros, mira el efecto y después revela la respuesta esperada.</p>
+    </div>
+    <nav class="pipe" id="pipe" aria-label="Pasos del pipeline"></nav>
+  </header>
+
+  <div class="toolbar">
+    <label class="tog" for="defmode"><input type="checkbox" id="defmode" checked><span class="sw"></span>Modo defensa (respuestas ocultas)</label>
+    <div class="seg" id="ftype"></div>
+    <div class="grow"><input class="search" id="q-search" type="search" placeholder="Buscar en preguntas (ej. zero_grad, recall, Grad-CAM)" aria-label="Buscar preguntas"></div>
+    <button class="btn primary" id="rand" type="button">Pregunta al azar</button>
+  </div>
+
+  <details class="rubric" id="rubric">
+    <summary>Pauta docente y escala de puntaje (0–4)</summary>
+    <div class="levels">
+      <div><b>0</b>No responde</div>
+      <div><b>1</b>Identifica el concepto</div>
+      <div><b>2</b>Explica cómo funciona</div>
+      <div><b>3</b>Aplica y justifica</div>
+      <div><b>4</b>Aplica, justifica y anticipa consecuencias o limitaciones</div>
+    </div>
+    <ul class="crit">
+      <li>No basta repetir una definición: la respuesta debe conectarse con el código ejecutado.</li>
+      <li>En preguntas de transferencia, el estudiante aplica el concepto a un escenario distinto de AeroCargo Inspect.</li>
+      <li>Si propone una modificación, explica su efecto en entrenamiento, evaluación o riesgo operacional.</li>
+      <li>Pregunta oral de 2 a 4 minutos. Puede pedirse localizar la celda relacionada y modificar una línea en vivo.</li>
+    </ul>
+  </details>
+
+  <div class="app">
+    <nav class="rail" id="rail" aria-label="Índice de preguntas"></nav>
+    <main id="main"></main>
+  </div>
+  <footer>Los laboratorios son simulaciones didácticas que imitan el comportamiento de PyTorch y de las métricas; no ejecutan el modelo real. Los puntajes que marques quedan solo en este navegador.</footer>
+</div>
+
+<script type="application/json" id="data">{"Q": [{"n": 1, "tipo": "Transferencia", "tema": "Paso 1 - Desbalance", "q": "En una nueva planta, la clase crítica baja desde 10% a solo 1%. Si mantienes accuracy como métrica principal, ¿qué problema puede ocurrir y qué cambiarías en evaluación y entrenamiento?", "a": "Un modelo que casi siempre prediga la clase mayoritaria podría mostrar accuracy alta y fallar casi todos los casos críticos. Evaluaría recall y F1 por clase/macro, revisaría la matriz de confusión y usaría pesos de clase, muestreo balanceado o focal loss; en seguridad priorizaría el recall de la clase crítica.", "peras": "Imagina una caja con 100 contenedores: solo 1 está dañado de forma crítica. Si el modelo dice “sin daño” para los 100, puede acertar 99 y mostrar 99% de accuracy, pero dejar pasar el único peligroso. Por eso hay que mirar cuántos críticos detecta y cuánto cuesta equivocarse.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 2, "tipo": "Código", "tema": "Paso 1 - Tensor", "q": "¿Por qué una imagen para ResNet se representa como [3, 224, 224] y un batch como [B, 3, 224, 224]? ¿Qué error conceptual habría si se usa [224, 224, 3] directamente?", "a": "PyTorch usa C,H,W y el DataLoader agrega B. ResNet espera [B,C,H,W]. [H,W,C] coloca los canales en la dimensión equivocada y hace incompatible o incorrecta la convolución.", "peras": "Piensa que cada imagen tiene tres láminas de color (rojo, verde y azul). PyTorch espera primero las tres láminas y luego alto y ancho: [canales, alto, ancho]. El batch agrega cuántas imágenes hay. Si pones los colores al final, es como entregar las páginas del álbum en un orden que la máquina no espera.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 3, "tipo": "Transferencia", "tema": "Paso 1 - Partición", "q": "Supón que las imágenes reales llegan como secuencias de un mismo contenedor tomadas por el mismo dron. ¿Por qué dividir imágenes al azar puede producir fuga de información y cómo harías la partición?", "a": "Fotogramas casi idénticos del mismo contenedor podrían quedar en train y test. Dividiría por entidad/grupo: todos los fotogramas de un contenedor, vuelo o jornada quedarían en un único subconjunto.", "peras": "Si varias fotos son del mismo contenedor, se parecen mucho, como fotos casi repetidas de una misma persona. Si algunas quedan para estudiar y otras para el examen, el modelo puede reconocer el contenedor y parecer más inteligente de lo que es. Hay que separar por contenedor o vuelo completo.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 4, "tipo": "Código", "tema": "Paso 1 - random_split", "q": "¿Por qué conviene entregar un generator con semilla a random_split si ya se fijó torch.manual_seed? ¿Qué propiedad queremos garantizar?", "a": "Hace explícita y aislada la fuente de aleatoriedad de la partición. La composición de train/valid/test se reproduce aunque otras operaciones aleatorias consuman el generador global.", "peras": "La semilla es como anotar el número de una rifa para repetir exactamente el mismo sorteo. Un generador propio para la partición evita que otros sorteos del programa cambien quién quedó en entrenamiento y quién en prueba.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 5, "tipo": "Transferencia", "tema": "Paso 1 - Data augmentation", "q": "En inspección aérea, ¿una rotación de 180° siempre sería una transformación válida? Propón un criterio para decidir qué augmentations usar.", "a": "No. Una transformación debe preservar la etiqueta y representar variaciones plausibles de captura. Debe respetar geometría, orientación, iluminación y perspectiva del dominio.", "peras": "Girar una foto puede ser como poner un mapa al revés: quizá la orientación sí importa para saber dónde está arriba o para reconocer una grieta. Antes de aumentar datos, pregunta si una persona experta seguiría interpretando la imagen igual después del cambio.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 6, "tipo": "Código", "tema": "Paso 1 - DataLoader", "q": "¿Por qué no existe un batch_size universalmente óptimo? Explica qué cambia al pasar de 16 a 128.", "a": "Un batch mayor usa más memoria y suele reducir ruido del gradiente; uno menor consume menos memoria y produce gradientes más variables. También puede exigir reajustar learning rate. Depende de hardware, modelo y datos.", "peras": "El batch es el tamaño de la bandeja de imágenes que se procesa de una vez. Con 16 bandejas pequeñas, se actualiza el modelo más seguido y se usa menos memoria; con 128 se aprovecha mejor el cálculo, pero se necesita más memoria y hay menos actualizaciones por época. El mejor tamaño depende del equipo y los datos.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 7, "tipo": "Transferencia", "tema": "Paso 2 - Transfer Learning", "q": "Si las imágenes reales fueran térmicas de un solo canal, ¿podrías usar ResNet18 preentrenada en ImageNet sin cambios? Da dos alternativas.", "a": "ResNet18 espera 3 canales. Puede replicarse el canal térmico 3 veces o modificarse conv1 para aceptar 1 canal e inicializar sus pesos a partir de los filtros RGB.", "peras": "ResNet espera tres canales como una receta que pide tres ingredientes. Una imagen térmica suele traer solo uno. Se puede adaptar la primera capa para aceptar un canal o copiar el canal térmico tres veces; la segunda opción permite usar la red casi tal cual, aunque no crea información nueva.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 8, "tipo": "Código", "tema": "Paso 2 - requires_grad", "q": "¿Qué diferencia práctica hay entre model.eval() y poner requires_grad=False? ¿Por qué no son equivalentes?", "a": "requires_grad=False evita calcular/actualizar gradientes de parámetros; model.eval() cambia el comportamiento de Dropout y BatchNorm. Resuelven problemas distintos.", "peras": "model.eval() cambia el comportamiento de ciertas capas, como poner el modelo en “modo examen”. requires_grad=False dice que no se anoten cambios para ciertos parámetros, como dejar algunas páginas fuera de la corrección. Una cosa cambia el modo de uso; la otra, qué pesos se pueden aprender.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 9, "tipo": "Transferencia", "tema": "Paso 2 - Fine tuning", "q": "Tras entrenar solo la última capa obtienes métricas estancadas con datos reales. ¿Qué estrategia de fine tuning aplicarías sin descongelar todo de golpe?", "a": "Descongelaría gradualmente bloques superiores, por ejemplo layer4 y luego layer3, con learning rate menor para capas preentrenadas y mayor para la cabeza nueva, validando sobreajuste.", "peras": "Si la última capa no mejora, no hace falta abrir todos los cajones de golpe. Primero se puede descongelar el último bloque de ResNet y entrenarlo con una tasa de aprendizaje pequeña; si aún falta, se avanza gradualmente hacia bloques anteriores y se valida que el resultado mejore.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 10, "tipo": "Código", "tema": "Paso 2 - fc", "q": "En ResNet18, ¿por qué se usa model.fc.in_features al reemplazar la última capa y no se escribe un número fijo a mano?", "a": "Obtiene la dimensión real de entrada de la cabeza para esa arquitectura. Evita hardcodear un valor y hace el código reutilizable.", "peras": "model.fc.in_features pregunta a la capa actual cuántas señales recibe. Es como medir el tamaño del enchufe antes de comprar el adaptador. Así el código funciona aunque cambie la variante de ResNet, sin adivinar un número fijo.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 11, "tipo": "Transferencia", "tema": "Paso 3 - Loss", "q": "En un nuevo caso, un falso negativo de daño crítico cuesta 100 veces más que revisar un falso positivo. ¿Basta con usar pesos inversamente proporcionales a la frecuencia?", "a": "No necesariamente. La frecuencia corrige desbalance, pero el costo operacional puede requerir pesos basados en costo, ajustes de decisión o una función sensible al costo.", "peras": "Los pesos por frecuencia dicen “presta más atención a lo raro”, pero el costo 100 a 1 dice “este error es muchísimo más caro”. No son la misma medida. Hay que probar umbrales y costos con datos de validación y acordar con el negocio cuánto riesgo se acepta.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 12, "tipo": "Código", "tema": "Paso 3 - CrossEntropyLoss", "q": "¿Por qué en un clasificador multiclase con CrossEntropyLoss normalmente NO se aplica softmax antes de entregar logits a la función de pérdida?", "a": "CrossEntropyLoss combina internamente LogSoftmax y NLLLoss de forma numéricamente estable. Aplicar softmax antes es redundante y puede empeorar estabilidad y gradientes.", "peras": "CrossEntropyLoss ya convierte internamente los puntajes (logits) en una comparación probabilística estable. Aplicar softmax antes sería como convertir una cantidad dos veces: normalmente no aporta y puede volver menos estable el cálculo.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 13, "tipo": "Código", "tema": "Paso 3 - weight_decay", "q": "¿Qué intenta controlar weight_decay en Adam y por qué su función no es la misma que bajar el learning_rate?", "a": "weight_decay regulariza penalizando pesos grandes; learning_rate controla el tamaño de los pasos de actualización. Uno busca reducir sobreajuste y el otro regula velocidad de aprendizaje.", "peras": "weight_decay desalienta pesos excesivamente grandes para que el modelo no memorice tanto, como preferir una regla sencilla en vez de una lista enorme de excepciones. learning_rate controla el tamaño de cada paso de aprendizaje. Uno limita la complejidad; el otro, el ritmo de los pasos.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 14, "tipo": "Transferencia", "tema": "Paso 3 - Reproducibilidad", "q": "Dos estudiantes fijan la misma semilla y aun así obtienen pequeñas diferencias en GPU. ¿Significa que uno programó mal? Explica.", "a": "No necesariamente. Algunas operaciones CUDA/cuDNN pueden ser no deterministas. Se pueden activar algoritmos deterministas, con posible costo de rendimiento.", "peras": "Usar la misma semilla es como empezar una receta con los mismos ingredientes, pero el horno puede calentar con pequeñas diferencias. La GPU ejecuta algunas operaciones en distinto orden o con algoritmos no deterministas. Pequeñas variaciones no prueban por sí solas que alguien se equivocó.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 15, "tipo": "Código", "tema": "Paso 4 - zero_grad", "q": "¿Qué ocurriría si eliminas optimizer.zero_grad() del ciclo de entrenamiento en PyTorch?", "a": "Los gradientes se acumulan por defecto. Cada backward sumaría el gradiente del batch actual a los anteriores y cambiaría la actualización salvo que esa acumulación sea intencional.", "peras": "PyTorch acumula los gradientes, como sumar cada cuenta nueva a una hoja sin borrar el total anterior. zero_grad() limpia la hoja antes del lote siguiente. Si se elimina, los gradientes de lotes anteriores se mezclan y el modelo da pasos equivocados.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 16, "tipo": "Código", "tema": "Paso 4 - backward", "q": "Explica la diferencia entre loss.backward() y optimizer.step(). ¿Cuál calcula y cuál modifica?", "a": "loss.backward() calcula gradientes y los guarda en .grad. optimizer.step() usa esos gradientes para modificar los parámetros.", "peras": "loss.backward() calcula cuánto contribuyó cada peso al error: hace el diagnóstico. optimizer.step() usa ese diagnóstico para cambiar los pesos: aplica el tratamiento. Calcular el ajuste y realizarlo son dos acciones distintas.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 17, "tipo": "Transferencia", "tema": "Paso 4 - Curvas", "q": "Training loss sigue bajando, pero validation loss comienza a subir después de la época 5. ¿Qué diagnosticarías y qué harías?", "a": "Es señal típica de sobreajuste. Aplicaría early stopping, más datos/augmentation, regularización o menor complejidad y elegiría el checkpoint por validación.", "peras": "El modelo mejora con los ejemplos de entrenamiento pero empieza a empeorar en ejemplos nuevos: es como memorizar las respuestas de la guía y fallar en la prueba. Puede haber sobreajuste. Probaría detener antes, usar regularización o más datos útiles y elegiría con validación.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 18, "tipo": "Código", "tema": "Paso 4 - train/eval", "q": "¿Por qué se llama model.train() al entrenar y model.eval() al validar aunque no estemos cambiando la arquitectura?", "a": "Porque cambian el comportamiento de capas dependientes del modo. Dropout se desactiva y BatchNorm usa estadísticas acumuladas en eval.", "peras": "train() activa comportamientos propios del aprendizaje, como dropout; eval() los desactiva o fija para medir de forma consistente. La arquitectura sigue siendo la misma, pero es como usar una calculadora en modo práctica o en modo evaluación.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 19, "tipo": "Transferencia", "tema": "Paso 4 - GPU", "q": "El modelo está en CUDA pero aparece un error indicando que los tensores están en CPU. ¿Qué objetos deben vivir en el mismo device durante forward y loss?", "a": "Modelo, imágenes, etiquetas y los pesos de clase usados por la loss deben ser compatibles con el mismo device.", "peras": "Durante una operación, todos los ingredientes deben estar en la misma mesa: imágenes, etiquetas, modelo y, si corresponde, pesos de la pérdida. Si el modelo está en GPU y las imágenes en CPU, es como intentar conectar un enchufe de otra forma: PyTorch no puede combinarlos directamente.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 20, "tipo": "Código", "tema": "Paso 4 - argmax", "q": "¿Por qué se usa torch.argmax(logits, dim=1) para obtener la clase predicha? ¿Qué representa dim=1?", "a": "Los logits tienen forma [batch,num_clases]. dim=1 recorre las clases para cada ejemplo y devuelve el índice del logit mayor.", "peras": "Para cada imagen hay tres puntajes, uno por clase. argmax elige el más alto. dim=1 señala que debe comparar las clases dentro de cada imagen, no comparar imágenes entre sí.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 21, "tipo": "Transferencia", "tema": "Paso 5 - Métricas", "q": "Accuracy=92%, pero recall de la clase 'Daño crítico' es 35%. ¿Aprobarías el modelo para operación? Fundamenta desde el negocio.", "a": "No por accuracy. Recall 35% significa que se detecta solo 35% de los daños críticos reales, dejando pasar muchos casos peligrosos.", "peras": "92% de aciertos en general no compensa que se escape casi dos de cada tres daños críticos. Sería como un detector de humo que acierta mucho en días normales pero no suena ante el fuego. No lo aprobaría sin revisar el riesgo, mejorar la detección crítica y definir una revisión humana.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 22, "tipo": "Código", "tema": "Paso 5 - Macro F1", "q": "¿Por qué macro F1 puede ser más informativo que weighted F1 en este problema desbalanceado?", "a": "Macro F1 da igual peso a cada clase y evita que la clase mayoritaria oculte un mal desempeño de la clase crítica. Weighted F1 pondera por soporte.", "peras": "Macro F1 calcula el resultado de cada clase y luego les da el mismo peso, como escuchar por igual a cada integrante del equipo. Weighted F1 da más peso a las clases con más ejemplos; puede verse alto aunque la clase rara crítica funcione mal.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 23, "tipo": "Transferencia", "tema": "Paso 5 - Matriz de confusión", "q": "En una matriz de confusión de 3 clases, ¿qué celda sería operacionalmente más peligrosa si filas son clases reales y columnas predicciones?", "a": "Real=2 (daño crítico) y predicha=0 (intacto): un falso negativo de seguridad que podría aprobar un contenedor peligroso.", "peras": "La celda más peligrosa es la fila “Daño crítico” y la columna “Techo intacto”: la realidad era crítica, pero el modelo recomendó como si estuviera bien. Es el equivalente a que el detector de humo diga “todo normal” cuando sí hay fuego.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 24, "tipo": "Código", "tema": "Paso 5 - no_grad", "q": "¿Por qué se usa with torch.no_grad() durante evaluación y qué NO hace esa instrucción?", "a": "Evita construir el grafo de autograd y reduce memoria/cálculo. No cambia Dropout/BatchNorm; para eso también se usa model.eval().", "peras": "no_grad() le dice a PyTorch que solo haga una predicción y no guarde cálculos para actualizar pesos; ahorra memoria y trabajo al evaluar. No cambia los pesos ni convierte por sí sola el modelo a modo evaluación: eso lo hace eval().", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 25, "tipo": "Transferencia", "tema": "Paso 5 - Cambio de distribución", "q": "El modelo funciona bien en días soleados, pero falla de noche. ¿Qué concepto de ML describe el problema y cómo lo comprobarías?", "a": "Es domain shift o cambio de distribución. Evaluaría métricas por condición, recolectaría test representativo y compararía errores por subgrupos.", "peras": "El ambiente nocturno cambió respecto de los datos que el modelo conocía: puede haber cambio de distribución (domain shift). Compararía ejemplos y métricas separados por día/noche y revisaría iluminación, ruido y tipos de daño; luego validaría con imágenes nocturnas representativas.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 26, "tipo": "Código", "tema": "Paso 6 - Grad-CAM", "q": "Grad-CAM muestra zonas calientes, pero ¿por qué eso no demuestra causalidad ni que el modelo 'entienda' el daño?", "a": "Es una explicación post hoc de regiones asociadas a la predicción. No prueba causalidad, comprensión semántica ni ausencia de correlaciones espurias.", "peras": "Grad-CAM colorea partes de la imagen que influyeron en la puntuación, como una pista de por dónde miró el modelo. Una pista no demuestra que esa zona causó la decisión ni que el modelo comprenda el daño; podría estar usando una correlación accidental.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 27, "tipo": "Transferencia", "tema": "Paso 6 - Grad-CAM", "q": "En imágenes reales Grad-CAM se concentra repetidamente en el logo de la naviera y no en el techo. ¿Qué sospechas y qué acciones tomarías?", "a": "Sospecharía un atajo/correlación espuria. Revisaría muestreo y etiquetas, balancearía navieras, ocultaría el logo como prueba y reentrenaría con datos más diversos.", "peras": "El modelo podría estar usando el logo como atajo, por ejemplo porque los contenedores dañados de entrenamiento tenían una naviera particular. Revisaría ejemplos por logo y daño, probaría ocultar o cambiar el logo, reuniría datos variados y comprobaría si la atención pasa al techo.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 28, "tipo": "Código", "tema": "Paso 6 - Hooks", "q": "¿Para qué sirven los hooks en una implementación de Grad-CAM y qué información necesitamos guardar?", "a": "Permiten capturar activaciones del forward y gradientes de una capa convolucional durante backward. Ambos se usan para construir el mapa de calor.", "peras": "Un hook es como poner un observador en una capa para guardar lo que vio y cómo le llegó la señal de error. Grad-CAM necesita las activaciones de una capa convolucional y sus gradientes para calcular qué zonas aportaron a una clase.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 29, "tipo": "Transferencia", "tema": "Pipeline completo", "q": "La empresa cambia de 3 a 5 estados operativos. Enumera al menos cuatro lugares del código que debes revisar y uno que podría seguir funcionando sin cambios.", "a": "Revisaría NUM_CLASSES, etiquetas, capa final, nombres/reportes, matriz y pesos de clase. El ciclo genérico forward/backward podría seguir funcionando si no tiene 3 hardcodeado.", "peras": "Al pasar de 3 a 5 estados, hay que revisar etiquetas y generación de datos, salida final (fc), nombres de clases, pesos de clase y métricas/matriz de confusión. La estructura general del DataLoader podría seguir funcionando si entrega las mismas imágenes y etiquetas compatibles.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}, {"n": 30, "tipo": "Código", "tema": "Pipeline completo", "q": "¿Por qué el test set debe utilizarse al final y no para ir eligiendo learning_rate, número de épocas o arquitectura?", "a": "Porque se contaminaría el test y produciría una estimación optimista. Los hiperparámetros se eligen con validación; test se reserva para generalización final.", "peras": "El test es el examen final que queremos rendir una sola vez. Si lo usamos para elegir arquitectura o épocas, aprendemos indirectamente sus respuestas y deja de medir qué tan bien generaliza el modelo a datos realmente nuevos.", "demo": "Explicar qué hace el código, por qué se usa y qué ocurriría si se modifica."}, {"n": 31, "tipo": "Transferencia", "tema": "Producción", "q": "El modelo será usado para decidir si un contenedor se carga. Diseña una política humana-en-el-bucle para predicciones inciertas o críticas.", "a": "Casos críticos o de baja confianza pasan a revisión humana; se registran imagen, predicción y decisión; se fijan umbrales según costo y los casos revisados alimentan monitoreo y reentrenamiento.", "peras": "Para decisiones dudosas, el sistema puede derivar a una persona; para señales de daño crítico, detener la carga hasta una inspección. Es como un semáforo: verde sigue, amarillo pide revisión y rojo bloquea, con registro de la decisión humana.", "demo": "Transferir el concepto a un escenario nuevo, justificar la decisión y anticipar consecuencias."}], "B": [{"tema": "Softmax", "q": "Si softmax convierte logits en probabilidades, ¿por qué entrenamos con logits y no con probabilidades?", "a": "CrossEntropyLoss espera logits y aplica internamente log-softmax de forma estable.", "peras": "Los logits son puntajes sin convertir. CrossEntropyLoss ya hace la conversión necesaria de manera segura; aplicar softmax antes sería hacer dos veces parte del mismo trabajo."}, {"tema": "Desbalance", "q": "¿Por qué class weights calculados con todo el dataset podrían introducir información del test?", "a": "Porque usan distribución de datos reservados; es más limpio estimarlos solo con train.", "peras": "Si miramos también las respuestas del examen para calcular los pesos, usamos información que debía quedar guardada. Es como practicar con la pauta de la prueba final."}, {"tema": "Transfer learning", "q": "¿Congelar parámetros elimina el costo computacional del forward por esas capas?", "a": "No. Evita gradientes/actualización de parámetros, pero el forward todavía se ejecuta.", "peras": "Congelar una capa evita que cambien sus pesos, pero la imagen igual debe pasar por ella. Es como cerrar una máquina para que no se ajuste, aunque el producto todavía cruza por dentro."}, {"tema": "Métricas", "q": "¿Puede un modelo tener precision alta y recall bajo para daño crítico?", "a": "Sí. Puede acertar casi siempre cuando predice crítico, pero omitir muchos críticos reales.", "peras": "Puede acertar mucho cuando se atreve a decir “crítico”, pero decirlo en muy pocos casos y dejar escapar muchos daños reales. Es como un guardia que da pocas falsas alarmas, pero también deja pasar intrusos."}, {"tema": "Grad-CAM", "q": "¿Por qué elegir una capa convolucional y no la fully connected para Grad-CAM?", "a": "La convolucional conserva estructura espacial; la FC ya perdió la correspondencia espacial.", "peras": "La capa convolucional todavía conserva un mapa de dónde estaban las señales en la imagen. La capa final ya resume esas señales en números, como tener el puntaje de un partido sin saber en qué zona ocurrió cada jugada."}, {"tema": "Reproducibilidad", "q": "¿Reproducibilidad significa que el modelo es correcto?", "a": "No. Solo significa que el experimento puede repetirse; un error también puede ser reproducible.", "peras": "Repetir el experimento y obtener lo mismo solo prueba que la receta se repite. Una receta puede repetirse perfectamente y aun así tener un ingrediente equivocado."}]}</script>
+<script>
+(()=>{
+'use strict';
+const DATA=JSON.parse(document.getElementById('data').textContent);
+const SEED=20261006;
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ======================= utilidades ======================= */
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){let u=0,v=0;while(!u)u=r();while(!v)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function erf(x){const s=Math.sign(x);x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y}
+const Phi=x=>.5*(1+erf(x/Math.SQRT2));
+const pdf=(x,m,s)=>Math.exp(-.5*((x-m)/s)**2)/(s*Math.sqrt(2*Math.PI));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pct=(v,d=0)=>(v*100).toFixed(d).replace('.',',')+' %';
+const num=(v,d=2)=>Number(v).toFixed(d).replace('.',',');
+const fmtN=v=>Math.round(v).toLocaleString('es-CL');
+const sigmoid=z=>1/(1+Math.exp(-z));
+function shuffle(n,r){const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function h(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(v==null||v===false)continue;if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k==='style')e.setAttribute('style',v);else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v===true?'':v)}for(const k of kids.flat()){if(k==null||k===false)continue;e.append(k.nodeType?k:document.createTextNode(String(k)))}return e}
+let UID=0;
+function slider(label,{min,max,step=1,value,fmt=v=>v,oninput}){const id='s'+(++UID);const out=h('output',{for:id},fmt(value));const inp=h('input',{type:'range',id,min,max,step,value});inp.addEventListener('input',()=>{out.textContent=fmt(+inp.value);oninput(+inp.value)});const w=h('div',{class:'ctl'},h('label',{for:id},label),out,inp);w.set=v=>{inp.value=v;out.textContent=fmt(+inp.value)};return w}
+function toggle(label,checked,on){const id='t'+(++UID);const inp=h('input',{type:'checkbox',id});inp.checked=!!checked;inp.addEventListener('change',()=>on(inp.checked));const w=h('label',{class:'tog',for:id},inp,h('span',{class:'sw'}),label);w.set=v=>{inp.checked=v};return w}
+function seg(options,value,on){const w=h('div',{class:'seg',role:'group'});const bs=options.map(([v,l])=>{const b=h('button',{type:'button','aria-pressed':String(v===value)},l);b.addEventListener('click',()=>{bs.forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');on(v)});return b});w.append(...bs);w.set=v=>bs.forEach((b,i)=>b.setAttribute('aria-pressed',String(options[i][0]===v)));return w}
+function btn(label,on,cls='btn small'){return h('button',{type:'button',class:cls,onclick:on},label)}
+function stat(label){const v=h('div',{class:'v'},'–');const e=h('div',{class:'stat'},h('div',{class:'l'},label),v);e.set=(val,tone)=>{v.textContent=val;e.className='stat'+(tone?' '+tone:'')};return e}
+function hl(src){const re=/(#[^\n]*)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|\b(def|for|in|if|else|elif|return|with|import|from|as|None|True|False|lambda|class|not|and|or|is)\b|\b(\d+(?:\.\d+)?(?:e-?\d+)?)\b/g;const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');let out='',last=0,m;while((m=re.exec(src))){out+=esc(src.slice(last,m.index));const cls=m[1]?'c':m[2]?'s':m[3]?'k':'n';out+=`<span class="${cls}">${esc(m[0])}</span>`;last=re.lastIndex}return out+esc(src.slice(last))}
+function codeBlock(lines){const pre=h('pre',{class:'code'});const els=lines.map(l=>{const s=h('span',{class:'ln',html:hl(l)||' '});pre.append(s);return s});pre.lines=els;return pre}
+
+/* tokens de color para canvas */
+let T={};
+function readT(){const s=getComputedStyle(document.documentElement);['bg','surface','surface-2','ink','muted','line','grid','accent','signal','c0','c1','c2','accent-ink'].forEach(k=>T[k.replace('-','')]=s.getPropertyValue('--'+k).trim()||'#888')}
+function A(hex,a){hex=hex.replace('#','');if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');const n=parseInt(hex,16);return`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`}
+readT();
+const FM=(px,w='')=>`${w} ${px}px "IBM Plex Mono", ui-monospace, monospace`.trim();
+const FS=(px,w='')=>`${w} ${px}px "IBM Plex Sans", system-ui, sans-serif`.trim();
+
+const io=new IntersectionObserver(es=>es.forEach(e=>{e.target._vis=e.isIntersecting}),{rootMargin:'100px'});
+const redrawers=new Set();
+function cv(aspect=.5,maxH=380,minH=180){const c=h('canvas',{class:'cv'});let _d=()=>{};const o={c,ctx:c.getContext('2d'),w:0,h:0};Object.defineProperty(o,'draw',{get:()=>()=>{if(o.w>40&&o.h>40)_d()},set:fn=>{_d=fn}});let lw=0;const ro=new ResizeObserver(()=>{const w=c.clientWidth;if(!w||w===lw)return;lw=w;const H=clamp(Math.round(w*aspect),minH,maxH);c.style.height=H+'px';const d=Math.min(2,devicePixelRatio||1);c.width=Math.round(w*d);c.height=Math.round(H*d);o.ctx.setTransform(d,0,0,d,0,0);o.w=w;o.h=H;o.draw()});ro.observe(c);redrawers.add(()=>{if(o.w)o.draw()});return o}
+function player(el){let id=null;return(n,draw,speed=1)=>{if(id)cancelAnimationFrame(id);id=null;if(RM||!el._vis){draw(n);return}let k=0;const tick=()=>{k=Math.min(n,k+speed);draw(k);if(k<n)id=requestAnimationFrame(tick);else id=null};tick()}}
+function lin(d0,d1,r0,r1){return v=>r0+(v-d0)/(d1-d0)*(r1-r0)}
+function axes(ctx,f,X,Y,{xt=[],yt=[],fx=String,fy=String,xl='',yl=''}={}){ctx.save();ctx.lineWidth=1;ctx.font=FM(10.5);ctx.fillStyle=T.muted;ctx.strokeStyle=T.line;
+  yt.forEach(v=>{const y=Math.round(Y(v))+.5;ctx.globalAlpha=.6;ctx.beginPath();ctx.moveTo(f.x0,y);ctx.lineTo(f.x1,y);ctx.stroke();ctx.globalAlpha=1;ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(fy(v),f.x0-6,y)});
+  xt.forEach(v=>{const x=X(v);ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(fx(v),x,f.y1+6)});
+  ctx.globalAlpha=1;ctx.strokeStyle=T.muted;ctx.beginPath();ctx.moveTo(f.x0,Math.round(f.y1)+.5);ctx.lineTo(f.x1,Math.round(f.y1)+.5);ctx.stroke();
+  if(xl){ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(xl,f.x1,f.y1-4)}
+  if(yl){ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(yl,f.x0+4,f.y0)}
+  ctx.restore()}
+function path(ctx,pts,color,w=2,dash){if(!pts.length)return;ctx.save();ctx.strokeStyle=color;ctx.lineWidth=w;ctx.lineJoin='round';ctx.lineCap='round';if(dash)ctx.setLineDash(dash);ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();ctx.restore()}
+function dot(ctx,x,y,r,fill,stroke){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.lineWidth=2;ctx.strokeStyle=stroke;ctx.stroke()}}
+function label(ctx,txt,x,y,color,align='left',base='middle',font=FM(11)){ctx.save();ctx.font=font;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline=base;ctx.fillText(txt,x,y);ctx.restore()}
+function legend(items){return h('div',{class:'legend'},items.map(([c,t,sq])=>h('span',{},h('i',{class:sq?'sq':'',style:`background:${c}`}),t)))}
+function wrapLab(...kids){const root=h('div',{class:'lab'},...kids);io.observe(root);return root}
+
+/* ======================= escenas de imagen ======================= */
+function drawRoof(ctx,x,y,W,H,opt={}){ // vista cenital del techo
+  ctx.save();ctx.translate(x,y);
+  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#24566f');g.addColorStop(1,'#1b4357');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;for(let i=0;i<12;i++){ctx.beginPath();const yy=H*(i+.5)/12;ctx.moveTo(0,yy);for(let k=0;k<=8;k++)ctx.quadraticCurveTo(W*(k+.25)/8,yy-3,W*(k+.5)/8,yy);ctx.stroke()}
+  const rx=W*.1,ry=H*.18,rw=W*.8,rh=H*.64;
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(rx+5,ry+6,rw,rh);
+  ctx.fillStyle='#b5622c';ctx.fillRect(rx,ry,rw,rh);
+  for(let i=0;i<30;i++){ctx.fillStyle=i%2?'rgba(0,0,0,.12)':'rgba(255,255,255,.07)';ctx.fillRect(rx+rw*i/30,ry,rw/30,rh)}
+  ctx.strokeStyle='#5d2f12';ctx.lineWidth=3;ctx.strokeRect(rx,ry,rw,rh);
+  if(opt.rust!==false){const cx=W*.45,cy=H*.32;const r=mulberry(7);ctx.fillStyle='rgba(96,46,18,.85)';ctx.beginPath();for(let a=0;a<6.3;a+=.35){const rr=W*.055*(0.7+.5*r());const px=cx+Math.cos(a)*rr*1.4,py=cy+Math.sin(a)*rr;a?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.closePath();ctx.fill();for(let i=0;i<20;i++){ctx.fillStyle=`rgba(${120+r()*40|0},${50+r()*30|0},20,.7)`;ctx.fillRect(cx+(r()-.5)*W*.16,cy+(r()-.5)*H*.1,2+r()*3,2+r()*3)}}
+  if(opt.dent!==false){const cx=W*.68,cy=H*.42,rr=W*.075;const rg=ctx.createRadialGradient(cx-rr*.25,cy-rr*.2,rr*.1,cx,cy,rr);rg.addColorStop(0,'rgba(20,10,5,.85)');rg.addColorStop(.6,'rgba(40,20,10,.55)');rg.addColorStop(1,'rgba(40,20,10,0)');ctx.fillStyle=rg;ctx.beginPath();ctx.ellipse(cx,cy,rr*1.2,rr,.3,0,7);ctx.fill();ctx.strokeStyle='rgba(255,220,190,.35)';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(cx+2,cy+2,rr*.9,rr*.7,.3,3.6,5.6);ctx.stroke()}
+  if(opt.logo!==false){ctx.save();ctx.translate(W*.28,H*.64);ctx.fillStyle='rgba(240,240,232,.92)';ctx.font=`800 ${Math.max(9,W*.055)}px "Archivo", sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('NAVIERA X',0,0);ctx.restore()}
+  ctx.restore()}
+function drawSide(ctx,x,y,W,H){ // vista oblicua (cámara lateral)
+  ctx.save();ctx.translate(x,y);
+  const sky=ctx.createLinearGradient(0,0,0,H*.5);sky.addColorStop(0,'#8ec5e6');sky.addColorStop(1,'#d7ecf5');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H*.5);
+  ctx.fillStyle='#f6e8a6';ctx.beginPath();ctx.arc(W*.85,H*.13,W*.05,0,7);ctx.fill();
+  ctx.fillStyle='#2a5d78';ctx.fillRect(0,H*.5,W,H*.5);
+  ctx.strokeStyle='#30414c';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(W*.08,H*.5);ctx.lineTo(W*.08,H*.08);ctx.lineTo(W*.45,H*.08);ctx.stroke();ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(W*.4,H*.08);ctx.lineTo(W*.4,H*.3);ctx.stroke();
+  const rx=W*.18,ry=H*.36,rw=W*.66,rh=H*.36;ctx.fillStyle='#b5622c';ctx.fillRect(rx,ry,rw,rh);for(let i=0;i<26;i++){ctx.fillStyle=i%2?'rgba(0,0,0,.14)':'rgba(255,255,255,.06)';ctx.fillRect(rx+rw*i/26,ry,rw/26,rh)}
+  ctx.fillStyle='#d2834c';ctx.beginPath();ctx.moveTo(rx,ry);ctx.lineTo(rx+W*.04,ry-H*.05);ctx.lineTo(rx+rw+W*.04,ry-H*.05);ctx.lineTo(rx+rw,ry);ctx.closePath();ctx.fill();
+  const cx=rx+rw*.7,cy=ry-H*.025;ctx.fillStyle='rgba(30,12,4,.75)';ctx.beginPath();ctx.ellipse(cx,cy,W*.05,H*.012,0,0,7);ctx.fill();
+  ctx.fillStyle='rgba(240,240,232,.9)';ctx.font=`800 ${Math.max(9,W*.045)}px "Archivo", sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('NAVIERA X',rx+rw*.35,ry+rh*.5);
+  ctx.restore()}
+const TURBO=[[48,18,59],[70,107,227],[40,187,236],[49,241,152],[164,252,60],[237,208,58],[251,128,34],[210,48,5],[122,4,3]];
+function cmap(v){v=clamp(v,0,1)*(TURBO.length-1);const i=Math.min(TURBO.length-2,Math.floor(v)),t=v-i;const a=TURBO[i],b=TURBO[i+1];return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]}
+
+/* ======================= LABORATORIOS ======================= */
+const LABS={};
+const CLS=['Intacto','Óxido','Daño crítico'];
+
+/* ---------- Métricas y matriz de confusión ---------- */
+LABS.metrics=(o={})=>{
+  const s={prev:o.prev??.10,r0:o.r0??.95,r1:o.r1??.85,r2:o.r2??.6,lazy:!!o.lazy,orient:'real',cell:o.cell??null};
+  const sp=slider('Daño crítico en los datos',{min:.5,max:30,step:.5,value:s.prev*100,fmt:v=>num(v,1)+' %',oninput:v=>{s.prev=v/100;upd()}});
+  const s0=slider('Recall · Intacto',{min:0,max:1,step:.01,value:s.r0,fmt:v=>pct(v),oninput:v=>{s.r0=v;s.lazy=false;upd()}});
+  const s1=slider('Recall · Óxido',{min:0,max:1,step:.01,value:s.r1,fmt:v=>pct(v),oninput:v=>{s.r1=v;s.lazy=false;upd()}});
+  const s2=slider('Recall · Daño crítico',{min:0,max:1,step:.01,value:s.r2,fmt:v=>pct(v),oninput:v=>{s.r2=v;s.lazy=false;upd()}});
+  const setAll=(p,a,b,c,lazy=false)=>{Object.assign(s,{prev:p,r0:a,r1:b,r2:c,lazy});sp.set(p*100);s0.set(a);s1.set(b);s2.set(c);upd()};
+  const presets=h('div',{class:'presets'},h('span',{class:'lbl'},'Escenarios'),
+    btn('Siempre predice "Intacto"',()=>setAll(s.prev,1,0,0,true)),
+    btn('Acc 92 % · recall crítico 35 %',()=>setAll(.10,.99,.96,.35)),
+    btn('Planta nueva: crítico al 1 %',()=>setAll(.01,.97,.9,0)),
+    btn('Modelo prudente',()=>setAll(.10,.86,.8,.93)));
+  const orientSeg=o.orient?h('div',{class:'presets'},h('span',{class:'lbl'},'Convención'),seg([['real','Filas = real (sklearn)'],['pred','Filas = predicción']],'real',v=>{s.orient=v;upd()})):null;
+  function M(r2=s.r2){const N=1000,n2=s.prev*N,rest=N-n2,n0=rest*7/9,n1=rest*2/9;
+    if(s.lazy)return[[n0,0,0],[n1,0,0],[n2,0,0]];
+    return[[n0*s.r0,n0*(1-s.r0)*.7,n0*(1-s.r0)*.3],[n1*(1-s.r1)*.7,n1*s.r1,n1*(1-s.r1)*.3],[n2*(1-r2)*.6,n2*(1-r2)*.4,n2*r2]]}
+  function met(m){const N=m.flat().reduce((a,b)=>a+b,0);const P=[],R=[],F=[],S=[];let tr=0;for(let k=0;k<3;k++){const col=m[0][k]+m[1][k]+m[2][k],row=m[k][0]+m[k][1]+m[k][2];tr+=m[k][k];P[k]=col>1e-9?m[k][k]/col:0;R[k]=row>1e-9?m[k][k]/row:0;F[k]=P[k]+R[k]>0?2*P[k]*R[k]/(P[k]+R[k]):0;S[k]=row}return{acc:tr/N,P,R,F,S,macro:(F[0]+F[1]+F[2])/3,weighted:(F[0]*S[0]+F[1]*S[1]+F[2]*S[2])/N}}
+  const RISK={'0,0':['ok','Contenedor sano aprobado para carga. Correcto.'],'0,1':['warn','Sano marcado como óxido: se agenda una mantención innecesaria. Costo bajo.'],'0,2':['warn','Falsa alarma: un contenedor sano queda retenido. Cuesta tiempo y una revisión humana, pero no pone en riesgo el buque.'],
+    '1,0':['warn','Óxido no detectado: se carga y la mantención se posterga. Riesgo medio a futuro.'],'1,1':['ok','Óxido detectado: se carga con orden de mantención. Correcto.'],'1,2':['warn','Óxido tratado como crítico: revisión extra. Costo bajo a medio.'],
+    '2,0':['bad','El error más peligroso: un techo con daño crítico se predice "Intacto" y el contenedor se carga al buque. En la convención de sklearn es cm[2, 0].'],'2,1':['bad','Daño crítico subestimado como óxido: puede cargarse con una mantención "para después". Riesgo alto.'],'2,2':['ok','Daño crítico detectado y rechazado. Es el acierto que más importa.']};
+  const cmBox=h('div',{class:'cmwrap'}),bars=h('div',{class:'mbars'}),info=h('div',{class:'callout info'}),big=h('div',{class:'callout'}),table=h('div',{class:'tw'});
+  const ch=cv(.62,280,190);
+  const BARS=[['Accuracy','acc','muted'],['Precision crítico','pc','c2'],['Recall crítico','rc','c2'],['F1 macro','macro','accent'],['F1 weighted','weighted','signal']];
+  const barEls=BARS.map(([l,k,c])=>{const fi=h('div',{class:'fi',style:`background:var(--${c})`}),vv=h('div',{class:'vv'});bars.append(h('div',{class:'mbar'},h('div',{},l),h('div',{class:'tr'},fi),vv));return{k,fi,vv}});
+  function upd(){const m=M(),r=met(m);
+    const vals={acc:r.acc,pc:r.P[2],rc:r.R[2],macro:r.macro,weighted:r.weighted};
+    barEls.forEach(b=>{b.fi.style.width=(vals[b.k]*100)+'%';b.vv.textContent=pct(vals[b.k],1)});
+    // matriz
+    cmBox.innerHTML='';const tr=s.orient==='pred';const mx=Math.max(...m.flat(),1);const g=h('div',{class:'cmgrid'});
+    g.append(h('div',{class:'cm-corner'},tr?'pred ↓  real →':'real ↓  pred →'));for(let j=0;j<3;j++)g.append(h('div',{class:'cm-h'},CLS[j]));
+    for(let i=0;i<3;i++){g.append(h('div',{class:'cm-h row'},CLS[i]));for(let j=0;j<3;j++){const rr=tr?j:i,cc=tr?i:j,v=m[rr][cc],k=rr+','+cc,a=Math.round(6+80*Math.sqrt(v/mx));
+      g.append(h('button',{type:'button',class:'cm-c'+(a>52?' hi':'')+(rr===2&&cc===0?' danger':'')+(s.cell===k?' sel':''),style:`--a:${a}%`,'aria-label':`real ${CLS[rr]}, predicho ${CLS[cc]}: ${fmtN(v)}`,onclick:()=>{s.cell=k;upd()}},h('b',{},fmtN(v)),h('small',{},`cm[${i}, ${j}]`)))}}
+    cmBox.append(g);
+    if(s.cell){const[t,txt]=RISK[s.cell];const[a,b]=s.cell.split(',');info.className='callout '+(t==='bad'?'':t==='ok'?'ok':'warn');info.innerHTML='';info.append(h('div',{class:'lbl'},`Real: ${CLS[a]} · Predicho: ${CLS[b]}`),h('div',{},txt))}
+    else{info.className='callout info';info.textContent='Toca una celda de la matriz para ver qué significa ese error en el puerto.'}
+    const miss=m[2][0];big.className='callout'+(miss<1?' ok':'');big.innerHTML='';big.append(h('b',{},fmtN(miss)),` de cada 1.000 contenedores tienen daño crítico y se aprobarían para carga. Accuracy: ${pct(r.acc,1)}.`);
+    table.innerHTML='';const tb=h('table',{class:'t'},h('tr',{},h('th',{},'Clase'),h('th',{},'Precision'),h('th',{},'Recall'),h('th',{},'F1'),h('th',{},'Soporte')),
+      ...CLS.map((c,k)=>h('tr',{},h('td',{},c),h('td',{},pct(r.P[k],1)),h('td',{},pct(r.R[k],1)),h('td',{},pct(r.F[k],1)),h('td',{},fmtN(r.S[k])))));table.append(tb);
+    ch.draw()}
+  ch.draw=()=>{const{ctx,w,h:H}=ch;readT();ctx.clearRect(0,0,w,H);const f={x0:48,y0:16,x1:w-16,y1:H-30};const X=lin(0,1,f.x0,f.x1),Y=lin(0,1,f.y1,f.y0);
+    axes(ctx,f,X,Y,{xt:[0,.25,.5,.75,1],yt:[0,.25,.5,.75,1],fx:v=>Math.round(v*100)+'%',fy:v=>Math.round(v*100)+'%',xl:'recall de daño crítico →'});
+    const pa=[],pm=[];for(let k=0;k<=50;k++){const rr=k/50,mm=met(M(rr));pa.push([X(rr),Y(mm.acc)]);pm.push([X(rr),Y(mm.macro)])}
+    path(ctx,pa,T.muted,2.5);path(ctx,pm,T.accent,2.5);const cur=met(M());const cx=X(s.lazy?0:s.r2);
+    ctx.save();ctx.strokeStyle=T.line;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(cx,f.y0);ctx.lineTo(cx,f.y1);ctx.stroke();ctx.restore();
+    dot(ctx,cx,Y(cur.acc),5,T.muted,T.surface);dot(ctx,cx,Y(cur.macro),5,T.accent,T.surface);
+    label(ctx,'accuracy',f.x1,Y(met(M(1)).acc)-10,T.muted,'right');label(ctx,'F1 macro',f.x1,Y(met(M(1)).macro)+12,T.accent,'right')};
+  upd();
+  return wrapLab(h('div',{class:'ctrls'},sp,s0,s1,s2),presets,orientSeg,
+    h('div',{class:'split even'},h('div',{style:'display:grid;gap:10px;min-width:0'},h('div',{class:'lbl'},'Matriz de confusión (por 1.000 contenedores)'),cmBox,info),
+      h('div',{style:'display:grid;gap:10px;min-width:0'},h('div',{class:'lbl'},'Métricas'),bars,big)),
+    h('div',{class:'split even'},h('div',{style:'min-width:0'},h('div',{class:'lbl'},'¿Cuánto cambia cada métrica si el modelo ignora la clase crítica?'),ch.c),table));
+};
+
+/* ---------- Costos y umbral ---------- */
+LABS.cost=(o={})=>{
+  const s={p:o.p??.10,cfn:o.cfn??100,t:o.t??.5,scaled:true};const mu1=.66,mu0=.34,sd=.12;
+  const rates=t=>({tpr:1-Phi((t-mu1)/sd),fpr:1-Phi((t-mu0)/sd)});
+  const counts=t=>{const N=1000,P=N*s.p,Nn=N-P,{tpr,fpr}=rates(t);const TP=P*tpr,FP=Nn*fpr;return{TP,FN:P-TP,FP,TN:Nn-FP,P}};
+  const cost=(t,c)=>{const k=counts(t);return c*k.FN+k.FP};
+  const opt=c=>{let bt=0,bc=1e18;for(let t=0;t<=1;t+=.002){const v=cost(t,c);if(v<bc){bc=v;bt=t}}return bt};
+  const sp=slider('Daño crítico en los datos',{min:1,max:30,step:1,value:s.p*100,fmt:v=>v+' %',oninput:v=>{s.p=v/100;upd()}});
+  const sc=slider('Costo de un falso negativo (× falsa alarma)',{min:1,max:200,step:1,value:s.cfn,fmt:v=>v+'×',oninput:v=>{s.cfn=v;upd()}});
+  const st=slider('Umbral para declarar "Daño crítico"',{min:.05,max:.95,step:.01,value:s.t,fmt:v=>num(v,2),oninput:v=>{s.t=v;upd()}});
+  const presets=h('div',{class:'presets'},h('span',{class:'lbl'},'Usar umbral'),
+    btn('óptimo por costo de negocio',()=>{s.t=opt(s.cfn);st.set(s.t);upd()}),
+    btn('implícito en pesos por frecuencia',()=>{s.t=opt((1-s.p)/s.p);st.set(s.t);upd()}),
+    btn('0,50 (argmax simple)',()=>{s.t=.5;st.set(.5);upd()}),
+    btn('muy exigente (0,80)',()=>{s.t=.8;st.set(.8);upd()}));
+  const A1=cv(.42,260,170),A2=cv(.42,260,170);
+  const sR=stat('Recall crítico'),sP=stat('Precision crítico'),sFN=stat('Críticos no detectados'),sFP=stat('Falsas alarmas'),sC=stat('Costo total');
+  const note=h('div',{class:'callout info'});
+  A1.draw=()=>{const{ctx,w,h:H}=A1;readT();ctx.clearRect(0,0,w,H);const f={x0:14,y0:14,x1:w-14,y1:H-28};const X=lin(0,1,f.x0,f.x1);const N=1000,P=N*s.p;
+    let mx=0;for(let x=0;x<=1;x+=.01)mx=Math.max(mx,P*pdf(x,mu1,sd),(N-P)*pdf(x,mu0,sd));const Y=lin(0,mx*1.08,f.y1,f.y0);
+    axes(ctx,f,X,Y,{xt:[0,.25,.5,.75,1],fx:v=>num(v,2)});label(ctx,'puntaje del modelo para "crítico" →',f.x1,f.y0+4,T.muted,'right','top');
+    const fill=(fn,from,to,col)=>{ctx.beginPath();ctx.moveTo(X(from),Y(0));for(let x=from;x<=to+1e-9;x+=.005)ctx.lineTo(X(x),Y(fn(x)));ctx.lineTo(X(to),Y(0));ctx.closePath();ctx.fillStyle=col;ctx.fill()};
+    const f1=x=>P*pdf(x,mu1,sd),f0=x=>(N-P)*pdf(x,mu0,sd);
+    fill(f1,0,s.t,A(T.c2,.35));fill(f0,s.t,1,A(T.c1,.3));
+    const c1=[],c0=[];for(let x=0;x<=1.0001;x+=.005){c1.push([X(x),Y(f1(x))]);c0.push([X(x),Y(f0(x))])}path(ctx,c0,T.c0,2);path(ctx,c1,T.c2,2);
+    ctx.strokeStyle=T.ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(s.t),f.y0);ctx.lineTo(X(s.t),f.y1);ctx.stroke();label(ctx,'umbral',X(s.t)+5,f.y0+30,T.ink)};
+  A2.draw=()=>{const{ctx,w,h:H}=A2;readT();ctx.clearRect(0,0,w,H);const f={x0:50,y0:14,x1:w-14,y1:H-28};const X=lin(0,1,f.x0,f.x1);const to0=opt(s.cfn),tf0=opt((1-s.p)/s.p);const mx=Math.max(cost(.05,s.cfn),cost(s.t,s.cfn),cost(tf0,s.cfn),cost(to0,s.cfn)*3)*1.15;const pts=[];for(let t=0;t<=1.0001;t+=.005)pts.push([t,Math.min(cost(t,s.cfn),mx)]);
+    const Y=lin(0,mx*1.05,f.y1,f.y0);axes(ctx,f,X,Y,{xt:[0,.25,.5,.75,1],yt:[0,mx/2],fx:v=>num(v,2),fy:v=>fmtN(v),xl:'umbral →'});label(ctx,'costo esperado',f.x0+4,f.y0+4,T.muted,'left','top');
+    path(ctx,pts.map(([t,c])=>[X(t),Y(c)]),T.accent,2.5);
+    const to=opt(s.cfn),tf=opt((1-s.p)/s.p);
+    const yo=Y(Math.min(mx,cost(to,s.cfn))),yf=Y(Math.min(mx,cost(tf,s.cfn)));ctx.save();ctx.setLineDash([2,3]);ctx.strokeStyle=T.accent;ctx.beginPath();ctx.moveTo(X(to),yo);ctx.lineTo(X(to),f.y0+30);ctx.stroke();ctx.strokeStyle=T.signal;ctx.beginPath();ctx.moveTo(X(tf),yf);ctx.lineTo(X(tf),f.y0+48);ctx.stroke();ctx.restore();
+    dot(ctx,X(to),yo,6,T.accent,T.surface);label(ctx,'óptimo negocio '+num(to,2),X(to),f.y0+24,T.accent,X(to)>f.x1-90?'right':'center');
+    dot(ctx,X(tf),yf,5,T.signal,T.surface);label(ctx,'pesos por frecuencia '+num(tf,2),X(tf),f.y0+42,T.signal,X(tf)>f.x1-110?'right':'center');
+    ctx.strokeStyle=T.ink;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(X(s.t),f.y0);ctx.lineTo(X(s.t),f.y1);ctx.stroke();ctx.setLineDash([])};
+  function upd(){const k=counts(s.t),rc=k.TP/k.P,pr=k.TP+k.FP>0?k.TP/(k.TP+k.FP):0;sR.set(pct(rc),rc<.8?'bad':rc<.95?'warn':'ok');sP.set(pct(pr),pr<.4?'warn':'');sFN.set(num(k.FN,1),k.FN>2?'bad':'ok');sFP.set(fmtN(k.FP));sC.set(fmtN(cost(s.t,s.cfn)));
+    const w=(1-s.p)/s.p;note.innerHTML=`Con ${Math.round(s.p*100)} % de críticos, los pesos inversos a la frecuencia equivalen a decir que un crítico "vale" <b>${num(w,1)}×</b>. El negocio dice <b>${s.cfn}×</b>. ${Math.abs(w-s.cfn)/s.cfn>.25?'No coinciden: hay que incorporar el costo real (pesos de costo o umbral ajustado).':'Aquí casi coinciden, pero solo por casualidad.'}`;
+    A1.draw();A2.draw()}
+  upd();
+  return wrapLab(h('div',{class:'ctrls'},sp,sc,st),presets,h('div',{class:'stats'},sR,sP,sFN,sFP,sC),
+    h('div',{class:'split even'},h('div',{style:'min-width:0;display:grid;gap:6px'},A1.c,legend([[T.c0||'#2B8554','Puntajes de contenedores no críticos'],[T.c2||'#C2332A','Puntajes de contenedores críticos'],[A(T.c2||'#C2332A',.35),'Críticos bajo el umbral (FN)',1],[A(T.c1||'#B4760F',.3),'Falsas alarmas (FP)',1]])),
+      h('div',{style:'min-width:0;display:grid;gap:6px'},A2.c,note)));
+};
+
+/* ---------- Softmax y CrossEntropy ---------- */
+LABS.softmax=()=>{
+  const s={z:[2,0.5,-1],y:0};
+  const lse=z=>{const m=Math.max(...z);return m+Math.log(z.reduce((a,v)=>a+Math.exp(v-m),0))};
+  const sm=z=>{const l=lse(z);return z.map(v=>Math.exp(v-l))};
+  const ce=(z,y)=>lse(z)-z[y];const dce=(z,y)=>ce(sm(z),y);
+  const sl=[0,1,2].map(i=>slider(`Logit ${CLS[i]}`,{min:-6,max:6,step:.1,value:s.z[i],fmt:v=>num(v,1),oninput:v=>{s.z[i]=v;upd()}}));
+  const ys=h('div',{class:'presets'},h('span',{class:'lbl'},'Clase real'),seg(CLS.map((c,i)=>[i,c]),0,v=>{s.y=v;upd()}));
+  const B=cv(.55,260,180),L=cv(.55,260,180);
+  const sCE=stat('CE(logits)'),sDD=stat('CE(softmax(logits))'),sG1=stat('Gradiente con logits'),sG2=stat('Gradiente con doble softmax'),sAM=stat('argmax');
+  B.draw=()=>{const{ctx,w,h:H}=B;readT();ctx.clearRect(0,0,w,H);const p=sm(s.z);const cw=(w-40)/3;const mid=H*.42;
+    label(ctx,'logits (puntajes libres)',14,12,T.muted);label(ctx,'softmax → probabilidades',14,mid+18,T.muted);
+    for(let i=0;i<3;i++){const x=20+i*cw+cw*.2,bw=cw*.6;const v=s.z[i];const zero=mid*.55+6;const hh=v/6*(mid*.5-14);ctx.fillStyle=[T.c0,T.c1,T.c2][i];ctx.globalAlpha=.85;ctx.fillRect(x,v>0?zero-hh:zero,bw,Math.abs(hh));ctx.globalAlpha=1;label(ctx,num(v,1),x+bw/2,v>0?zero-hh-8:zero+Math.abs(hh)+8,T.ink,'center');
+      ctx.strokeStyle=T.line;ctx.beginPath();ctx.moveTo(x-6,zero+.5);ctx.lineTo(x+bw+6,zero+.5);ctx.stroke();
+      const by=H-24,ph=p[i]*(H-mid-56);ctx.fillStyle=[T.c0,T.c1,T.c2][i];ctx.fillRect(x,by-ph,bw,ph);label(ctx,pct(p[i],1),x+bw/2,by-ph-9,T.ink,'center');label(ctx,CLS[i]+(i===s.y?' ✓':''),x+bw/2,H-10,i===s.y?T.ink:T.muted,'center',undefined,FM(11,i===s.y?'600':''))}};
+  L.draw=()=>{const{ctx,w,h:H}=L;readT();ctx.clearRect(0,0,w,H);const f={x0:40,y0:14,x1:w-14,y1:H-28};const X=lin(-6,6,f.x0,f.x1),Y=lin(0,8,f.y1,f.y0);
+    axes(ctx,f,X,Y,{xt:[-6,-3,0,3,6],yt:[0,2,4,6,8],xl:`logit de la clase real (${CLS[s.y]}) →`,yl:'pérdida'});
+    const a=[],b=[];for(let v=-6;v<=6.001;v+=.1){const z=[...s.z];z[s.y]=v;a.push([X(v),Y(Math.min(8,ce(z,s.y)))]);b.push([X(v),Y(dce(z,s.y))])}
+    path(ctx,a,T.accent,2.5);path(ctx,b,T.c2,2.5,[6,4]);
+    const floor=Math.log(Math.E+2)-1;ctx.save();ctx.strokeStyle=T.c2;ctx.globalAlpha=.4;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(f.x0,Y(floor));ctx.lineTo(f.x1,Y(floor));ctx.stroke();ctx.restore();label(ctx,'piso ≈ 0,55: nunca baja de aquí',f.x1,Y(floor)-9,T.c2,'right');
+    dot(ctx,X(s.z[s.y]),Y(Math.min(8,ce(s.z,s.y))),5,T.accent,T.surface);dot(ctx,X(s.z[s.y]),Y(dce(s.z,s.y)),5,T.c2,T.surface)};
+  function upd(){const p=sm(s.z);const c1=ce(s.z,s.y),c2=dce(s.z,s.y);const g1=p[s.y]-1;const e=1e-3;const z1=[...s.z],z2=[...s.z];z1[s.y]+=e;z2[s.y]-=e;const g2=(dce(z1,s.y)-dce(z2,s.y))/(2*e);
+    sCE.set(num(c1,3));sDD.set(num(c2,3),'warn');sG1.set(num(g1,3));sG2.set(num(g2,3),'warn');const am=p.indexOf(Math.max(...p));sAM.set(CLS[am],am===s.y?'ok':'bad');B.draw();L.draw()}
+  upd();
+  return wrapLab(h('div',{class:'ctrls'},...sl),ys,h('div',{class:'stats'},sCE,sDD,sG1,sG2,sAM),
+    h('div',{class:'split even'},B.c,h('div',{style:'min-width:0;display:grid;gap:6px'},L.c,legend([[T.accent||'#0A6889','CrossEntropyLoss(logits) ✓'],[T.c2||'#C2332A','CrossEntropyLoss(softmax(logits)) ✗']]))),
+    h('p',{class:'note'},'Sube el logit de la clase real: con logits la pérdida tiende a 0 y el gradiente sigue empujando. Con softmax aplicado antes, la pérdida se queda pegada sobre 0,55 y el gradiente casi desaparece: el modelo aprende más lento y peor.'));
+};
+
+/* ---------- argmax y dim ---------- */
+LABS.argmax=()=>{
+  let seed=3,dim=1;const B=5;let Z=[];
+  const gen=()=>{const r=mulberry(seed);Z=[...Array(B)].map(()=>[0,1,2].map(()=>Math.round((gauss(r)*1.6)*10)/10))};gen();
+  const box=h('div',{class:'tw'}),res=h('div',{class:'okmsg'});
+  const dseg=seg([[1,'dim=1 (por fila: cada imagen)'],[0,'dim=0 (por columna: cada clase)']],1,v=>{dim=v;upd()});
+  function upd(){box.innerHTML='';const t=h('table',{class:'t'});t.append(h('tr',{},h('th',{},'logits'),...CLS.map((c,j)=>h('th',{},`${j} · ${c}`)),h('th',{},dim===1?'pred':'')));
+    const best=dim===1?Z.map(r=>r.indexOf(Math.max(...r))):[0,1,2].map(j=>{let bi=0;Z.forEach((r,i)=>{if(r[j]>Z[bi][j])bi=i});return bi});
+    Z.forEach((r,i)=>t.append(h('tr',{},h('td',{},`imagen ${i}`),...r.map((v,j)=>{const on=dim===1?best[i]===j:best[j]===i;return h('td',{style:on?`background:color-mix(in srgb,var(--accent) 28%,transparent);font-weight:600`:''},num(v,1))}),h('td',{},dim===1?CLS[best[i]]:''))));
+    if(dim===0)t.append(h('tr',{},h('td',{},'argmax'),...best.map(b=>h('td',{style:'font-weight:600'},`img ${b}`)),h('td',{})));
+    box.append(t);
+    res.className=dim===1?'okmsg':'err';
+    res.textContent=dim===1?`logits.shape = [${B}, 3]  →  torch.argmax(logits, dim=1).shape = [${B}]\npreds = [${best.join(', ')}]   # una clase por imagen ✓`:`torch.argmax(logits, dim=0).shape = [3]\n[${best.join(', ')}] = "qué imagen tiene el mayor puntaje para cada clase"\nNo es una predicción por imagen: comparar con labels [${B}] fallaría o daría basura.`}
+  upd();
+  return wrapLab(h('div',{class:'presets'},h('span',{class:'lbl'},'Eje'),dseg,btn('Nuevo batch',()=>{seed++;gen();upd()})),box,res,
+    h('p',{class:'note'},'dim=0 recorre el batch (imágenes); dim=1 recorre las clases. El modelo entrega un vector de 3 puntajes por imagen, así que la clase predicha es el índice del mayor puntaje a lo largo de dim=1. argmax da el mismo resultado sobre logits o sobre softmax, porque softmax no cambia el orden.'));
+};
+
+/* ---------- Tensor [C,H,W] ---------- */
+LABS.tensor=()=>{
+  const s={lay:'chw',B:4};const n=12;
+  const px=(i,j)=>{let r=181,g=98,b=44;if(j%2){r-=22;g-=14;b-=8}const d1=Math.hypot(i-3.5,j-4.5),d2=Math.hypot(i-7.5,j-8);if(d1<2.4){r=100;g=48;b=20}if(d2<2){r=60;g=45;b=40}if(i===0||i===n-1){r=40;g=86;b=110}return[r,g,b]};
+  const C=cv(.46,330,220);
+  const sh=h('div',{class:'okmsg'}),mem=stat('Memoria del batch (float32)'),dims=stat('Shape');
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const cs=Math.max(5,Math.min(13,(w*.32)/n));
+    // imagen original
+    const ox=16,oy=34;label(ctx,'imagen RGB',ox,16,T.muted);for(let i=0;i<n;i++)for(let j=0;j<n;j++){const[r,g,b]=px(i,j);ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(ox+j*cs,oy+i*cs,cs,cs)}
+    const bx=ox+n*cs+28;
+    if(s.lay==='chw'){label(ctx,'[C, H, W]: 3 planos apilados, uno por canal',bx,16,T.ink);const cols=[[220,60,50],[60,170,90],[60,110,220]];
+      for(let c=2;c>=0;c--){const dx=bx+c*cs*2.2,dy=oy+c*cs*1.4;for(let i=0;i<n;i++)for(let j=0;j<n;j++){const v=px(i,j)[c]/255;const[r,g,b]=cols[c];ctx.fillStyle=`rgba(${r},${g},${b},${.12+v*.88})`;ctx.fillRect(dx+j*cs,dy+i*cs,cs-.5,cs-.5)}ctx.strokeStyle=T.ink;ctx.lineWidth=1;ctx.strokeRect(dx,dy,n*cs,n*cs);label(ctx,['canal 0 · R','canal 1 · G','canal 2 · B'][c],dx+n*cs+6,dy+n*cs-6,T.muted)}}
+    else{label(ctx,'[H, W, C]: cada píxel guarda R, G y B juntos',bx,16,T.ink);for(let i=0;i<n;i++)for(let j=0;j<n;j++){const v=px(i,j);for(let c=0;c<3;c++){const col=[[220,60,50],[60,170,90],[60,110,220]][c];ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${.15+v[c]/255*.85})`;ctx.fillRect(bx+j*cs*1.6+c*cs*.5,oy+i*cs,cs*.5,cs-.5)}}}
+    // batch
+    const by=H-cs*3-40;label(ctx,`batch: ${s.B} imágenes apiladas → primera dimensión`,ox,by-8,T.muted);for(let b=0;b<s.B;b++){const x=ox+b*(cs*3.2+8),y=by+4;for(let i=0;i<n;i+=4)for(let j=0;j<n;j+=4){const[r,g,bb]=px(i,j);ctx.fillStyle=`rgb(${r},${g},${bb})`;ctx.fillRect(x+j/4*cs,y+i/4*cs,cs,cs)}ctx.strokeStyle=T.line;ctx.strokeRect(x-.5,y-.5,cs*3+1,cs*3+1);label(ctx,String(b),x+cs*1.5,y+cs*3+10,T.muted,'center')}};
+  function upd(){const ok=s.lay==='chw';dims.set(ok?`[${s.B}, 3, 224, 224]`:`[${s.B}, 224, 224, 3]`,ok?'ok':'bad');mem.set(num(s.B*3*224*224*4/1048576,1)+' MB');
+    sh.className=ok?'okmsg':'err';sh.textContent=ok?`x.shape = torch.Size([${s.B}, 3, 224, 224])\nconv1 = Conv2d(3, 64, kernel_size=7)  → lee dim 1 = 3 canales ✓`:`x.shape = torch.Size([${s.B}, 224, 224, 3])\nPyTorch lee la dim 1 como canales → cree que hay 224 canales.\nRuntimeError: Given groups=1, weight of size [64, 3, 7, 7], expected input[${s.B}, 224, 224, 3] to have 3 channels, but got 224 channels instead\nSolución: x.permute(0, 3, 1, 2)  o  transforms.ToTensor()`;C.draw()}
+  upd();
+  return wrapLab(h('div',{class:'ctrls'},h('div',{class:'presets'},h('span',{class:'lbl'},'Formato'),seg([['chw','[C, H, W] PyTorch'],['hwc','[H, W, C] NumPy / PIL']],'chw',v=>{s.lay=v;upd()})),
+    slider('Tamaño del batch B',{min:1,max:8,step:1,value:4,fmt:v=>v,oninput:v=>{s.B=v;upd()}})),C.c,h('div',{class:'stats'},dims,mem),sh);
+};
+
+/* ---------- Fuga por secuencias ---------- */
+LABS.leak=()=>{
+  const s={mode:'random',sim:.8,seed:1};const NC=20,K=6;
+  const C=cv(.36,220,150);const sLeak=stat('Contenedores en train y test'),sAcc=stat('Accuracy medida en test'),sReal=stat('Accuracy real en contenedores nuevos');
+  let assign=[];
+  function split(){const r=mulberry(SEED+s.seed);assign=[];if(s.mode==='random'){const idx=shuffle(NC*K,r);const test=new Set(idx.slice(0,Math.round(NC*K*.15)));for(let i=0;i<NC*K;i++)assign.push(test.has(i)?1:0)}
+    else{const cs=shuffle(NC,r).slice(0,3);for(let c=0;c<NC;c++)for(let k=0;k<K;k++)assign.push(cs.includes(c)?1:0)}}
+  function upd(){split();const r=mulberry(99+s.seed);let leakC=0,hit=0,tot=0;const pMem=.6+.37*s.sim;
+    for(let c=0;c<NC;c++){let tr=0,te=0;for(let k=0;k<K;k++)assign[c*K+k]?te++:tr++;if(tr&&te)leakC++;for(let k=0;k<K;k++)if(assign[c*K+k]){tot++;if(r()<(tr?pMem:.6))hit++}}
+    sLeak.set(`${leakC} de 20`,leakC?'bad':'ok');sAcc.set(pct(hit/tot),leakC?'warn':'');sReal.set('≈ 60 %');C.draw()}
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const f={x0:10,y0:24,x1:w-10,y1:H-10};const cw=(f.x1-f.x0)/NC,chh=(f.y1-f.y0)/K;
+    label(ctx,'cada columna = un contenedor fotografiado 6 veces por el mismo dron',f.x0,10,T.muted);
+    for(let c=0;c<NC;c++){const hue=(c*137)%360;for(let k=0;k<K;k++){const x=f.x0+c*cw+2,y=f.y0+k*chh+2,ww=cw-4,hh=chh-4;const te=assign[c*K+k];ctx.fillStyle=`hsl(${hue} 45% ${te?62:48}%)`;if(te){ctx.fillStyle=T.surface;ctx.fillRect(x,y,ww,hh);ctx.strokeStyle=`hsl(${hue} 55% 45%)`;ctx.lineWidth=2.5;ctx.strokeRect(x+1,y+1,ww-2,hh-2);label(ctx,'T',x+ww/2,y+hh/2,T.ink,'center','middle',FM(10,'600'))}else ctx.fillRect(x,y,ww,hh)}}};
+  upd();
+  return wrapLab(h('div',{class:'ctrls'},h('div',{class:'presets'},h('span',{class:'lbl'},'Partición'),seg([['random','Al azar por imagen'],['group','Por contenedor (GroupShuffleSplit)']],'random',v=>{s.mode=v;upd()}),btn('Nueva partición',()=>{s.seed++;upd()})),
+    slider('Parecido entre fotos del mismo contenedor',{min:0,max:1,step:.05,value:s.sim,fmt:v=>pct(v),oninput:v=>{s.sim=v;upd()}})),
+    C.c,legend([['hsl(200 45% 48%)','train (relleno)',1],['transparent','T = test (borde)']]),h('div',{class:'stats'},sLeak,sAcc,sReal),
+    h('p',{class:'note'},'Con partición aleatoria, fotos casi idénticas del mismo contenedor quedan a ambos lados: el modelo "reconoce el contenedor" en vez de aprender el daño y el test se infla. Agrupando por contenedor (o por vuelo o fecha) el test mide lo que pasará con contenedores nuevos.'));
+};
+
+/* ---------- Semillas y random_split ---------- */
+LABS.seed=(o={})=>{
+  const s={gen:true,prior:0,fix:true,bug:!!o.bug};const runs=[];
+  const runBox=h('div',{class:'runs'});
+  function split(){const glob=mulberry(s.fix?SEED:(Math.random()*1e9|0));for(let i=0;i<s.prior*37;i++)glob();const r=s.gen?mulberry(SEED+1):glob;const p=shuffle(30,r);const lab=Array(30);p.forEach((idx,k)=>lab[idx]=k<21?0:k<26?1:2);return lab}
+  function run(){const lab=split();const prev=runs[runs.length-1];const same=prev?prev.lab.join()===lab.join():null;const acc=s.bug?.31:.68+(s.fix?0:(Math.random()-.5)*.04);runs.push({lab,same,cfg:`${s.gen?'generator':'sin generator'} · ${s.prior} celda(s) antes`,acc});if(runs.length>6)runs.shift();render()}
+  function render(){runBox.innerHTML='';runs.forEach((r,i)=>runBox.append(h('div',{class:'run'},h('div',{},h('div',{class:'mono'},`Ejecución ${i+1}`),h('div',{style:'color:var(--muted)'},r.cfg)),h('div',{class:'strip'},r.lab.map(v=>h('i',{style:`background:${['var(--accent)','var(--signal)','var(--c2)'][v]}`,title:['train','val','test'][v]}))),
+    h('div',{class:'mono',style:`color:${r.same===null?'var(--muted)':r.same?'var(--c0)':'var(--c2)'}`},r.same===null?'—':r.same?'= igual':'≠ cambió'))))
+    if(s.bug)runBox.append(h('div',{class:'callout warn'},`Accuracy medida en cada ejecución: ${runs.map(r=>pct(r.acc)).join(' · ')}. El bug se repite idéntico: reproducible no significa correcto.`))}
+  const ctr=h('div',{class:'ctrls'},toggle('Pasar generator con semilla a random_split',true,v=>{s.gen=v}),toggle('Fijar torch.manual_seed(SEED)',true,v=>{s.fix=v}),
+    slider('Celdas previas que consumen aleatorios (crear modelo, probar un transform…)',{min:0,max:3,step:1,value:0,fmt:v=>v,oninput:v=>{s.prior=v}}));
+  if(o.bug)ctr.append(toggle('Bug: etiquetas desalineadas',true,v=>{s.bug=v}));
+  run();
+  return wrapLab(ctr,h('div',{class:'presets'},btn('Reiniciar kernel y ejecutar todo',run,'btn primary small'),btn('Borrar historial',()=>{runs.length=0;render()})),
+    legend([['var(--accent)','train (21)',1],['var(--signal)','val (5)',1],['var(--c2)','test (4)',1]]),runBox,
+    h('p',{class:'note'},'Prueba: desactiva el generator, ejecuta, sube "celdas previas" a 1 y ejecuta de nuevo. Con solo la semilla global, la partición depende de cuántos números aleatorios se consumieron antes. Con su propio generator, la partición queda aislada del resto del notebook.'));
+};
+
+/* ---------- Data augmentation ---------- */
+LABS.aug=()=>{
+  const s={view:'top',rot:0,fh:false,fv:false,zoom:1,br:1,maxDeg:10,p:.5,seed:1};
+  const C=cv(.62,340,200);const rules=h('ul',{class:'rules'});const thumbs=h('div',{style:'display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px'});
+  const draw=(ctx,W,H,rot,fh,fv,zoom,br)=>{ctx.save();ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);ctx.translate(W/2,H/2);ctx.rotate(rot*Math.PI/180);ctx.scale((fh?-1:1)*zoom,(fv?-1:1)*zoom);ctx.translate(-W/2,-H/2);(s.view==='top'?drawRoof:drawSide)(ctx,0,0,W,H);ctx.restore();
+    if(br<1){ctx.fillStyle=`rgba(0,0,0,${1-br})`;ctx.fillRect(0,0,W,H)}else if(br>1){ctx.fillStyle=`rgba(255,255,255,${(br-1)*.55})`;ctx.fillRect(0,0,W,H)}};
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const W=Math.min(w,H*1.5),x0=(w-W)/2;ctx.save();ctx.beginPath();ctx.rect(x0,0,W,H);ctx.clip();ctx.translate(x0,0);draw(ctx,W,H,s.rot,s.fh,s.fv,s.zoom,s.br);ctx.restore()};
+  function damageVisible(){const dx=(s.view==='top'?.68:.66)-.5,dy=(s.view==='top'?.42:.33)-.5;const a=s.rot*Math.PI/180;let x=dx*s.zoom*(s.fh?-1:1),y=dy*s.zoom*(s.fv?-1:1);const rx=x*Math.cos(a)-y*Math.sin(a),ry=x*Math.sin(a)+y*Math.cos(a);return Math.abs(rx)<.47&&Math.abs(ry)<.47}
+  function upd(){const R=[];const ar=Math.abs(((s.rot+180)%360+360)%360-180);
+    if(s.view==='side'){R.push(ar>15?['bad','Rotación grande en cámara oblicua: el cielo queda abajo o de lado. Esa escena no existe en producción.']:['ok','Rotación pequeña: simula una cámara levemente inclinada.']);R.push(s.fv?['bad','Volteo vertical en vista lateral: cielo abajo, mar arriba. Inválido.']:['ok','Sin volteo vertical.'])}
+    else{R.push(['ok','Vista cenital: el dron puede llegar desde cualquier dirección, así que rotar conserva el significado.']);if(ar%90>3&&ar%90<87)R.push(['warn','Ángulo no múltiplo de 90°: aparecen esquinas negras (relleno 0). El modelo podría aprender ese artefacto; conviene recortar o rellenar con reflejo.'])}
+    R.push(damageVisible()?['ok','El daño sigue dentro del encuadre: la etiqueta sigue siendo verdadera.']:['bad','El recorte o la rotación sacaron el daño del encuadre: la etiqueta "Daño crítico" ya no es verdadera.']);
+    R.push(s.br<.55||s.br>1.6?['warn','Brillo fuera de lo que verán las cámaras reales. Úsalo solo si de verdad se opera de noche o a contraluz.']:['ok','Brillo dentro de un rango realista.']);
+    if(s.fh)R.push(['warn','El texto "NAVIERA X" queda espejado. No importa si el modelo no debe leer texto; incluso ayuda a que no dependa del logo.']);
+    rules.innerHTML='';R.forEach(([t,x])=>rules.append(h('li',{class:t},h('span',{class:'m'},t==='ok'?'✓':t==='warn'?'!':'✗'),h('span',{},x))));C.draw();drawThumbs()}
+  function drawThumbs(){thumbs.innerHTML='';const r=mulberry(s.seed*31);for(let i=0;i<6;i++){const c=h('canvas',{style:'width:100%;border-radius:3px;display:block'});const W=150,H=100;c.width=W;c.height=H;const rot=(r()*2-1)*s.maxDeg,fh=r()<s.p;draw(c.getContext('2d'),W,H,rot,fh,false,1,1);thumbs.append(h('div',{},c,h('div',{class:'mono',style:'font-size:10px;color:var(--muted);text-align:center'},`${rot>0?'+':''}${rot.toFixed(0)}°${fh?' · flip':''}`)))}}
+  const rs=slider('Rotación',{min:-180,max:180,step:1,value:0,fmt:v=>v+'°',oninput:v=>{s.rot=v;upd()}});
+  const zs=slider('Zoom / recorte central',{min:1,max:3,step:.05,value:1,fmt:v=>num(v,2)+'×',oninput:v=>{s.zoom=v;upd()}});
+  const bs=slider('Brillo',{min:.3,max:2,step:.05,value:1,fmt:v=>num(v,2),oninput:v=>{s.br=v;upd()}});
+  const fH=toggle('Volteo horizontal',false,v=>{s.fh=v;upd()}),fV=toggle('Volteo vertical',false,v=>{s.fv=v;upd()});
+  upd();
+  return wrapLab(h('div',{class:'presets'},h('span',{class:'lbl'},'Cámara'),seg([['top','Cenital (dron vertical)'],['side','Oblicua (cámara en grúa)']],'top',v=>{s.view=v;upd()}),btn('Rotar 180°',()=>{s.rot=180;rs.set(180);upd()}),btn('Restablecer',()=>{Object.assign(s,{rot:0,fh:false,fv:false,zoom:1,br:1});rs.set(0);zs.set(1);bs.set(1);fH.set(false);fV.set(false);upd()})),
+    h('div',{class:'ctrls'},rs,zs,bs,fH,fV),
+    h('div',{class:'split'},C.c,h('div',{style:'display:grid;gap:8px;min-width:0'},h('div',{class:'lbl'},'Criterio: ¿la transformación produce una imagen que podría existir y conserva la etiqueta?'),rules)),
+    h('div',{class:'lbl'},'Lo que ve el modelo en cada época con el transform del notebook'),
+    h('div',{class:'ctrls'},slider('RandomRotation(degrees=…)',{min:0,max:180,step:5,value:10,fmt:v=>'±'+v+'°',oninput:v=>{s.maxDeg=v;drawThumbs()}}),slider('RandomHorizontalFlip(p=…)',{min:0,max:1,step:.1,value:.5,fmt:v=>num(v,1),oninput:v=>{s.p=v;drawThumbs()}}),btn('Otro batch',()=>{s.seed++;drawThumbs()})),thumbs);
+};
+
+/* ---------- batch_size ---------- */
+LABS.batch=()=>{
+  const Bs=[8,16,32,64,128,256];const s={bi:2,scale:false};
+  const C=cv(.42,300,190);const sSteps=stat('Actualizaciones por época'),sNoise=stat('Ruido del gradiente'),sMem=stat('Entrada por batch'),sLR=stat('Learning rate'),sEnd=stat('Pérdida al final de la época');
+  let traj=[],div=false;const play=player(C.c);
+  function sim(){const B=Bs[s.bi],steps=Math.ceil(1050/B),lr=s.scale?.045*B/32:.045,sig=7/Math.sqrt(B);const r=mulberry(SEED+B);let x=-4.5,y=1.5;traj=[[x,y]];div=false;
+    for(let i=0;i<steps;i++){const gx=x+sig*gauss(r)*.6,gy=8*y+sig*gauss(r);x-=lr*gx;y-=lr*gy;if(Math.abs(x)>50||Math.abs(y)>50){div=true;traj.push([x,y]);break}traj.push([x,y])}
+    sSteps.set(fmtN(steps));sNoise.set('×'+num(Math.sqrt(32/B),2),B<16?'warn':'');sMem.set(num(B*.574,1)+' MB',B>128?'warn':'');sLR.set(num(lr,3),div?'bad':'');const[fx,fy]=traj[traj.length-1];sEnd.set(div?'diverge':num(.5*(fx*fx+8*fy*fy),2),div?'bad':'');
+    play(traj.length,k=>{C.k=k;C.draw()},Math.max(1,traj.length/60))}
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const f={x0:10,y0:10,x1:w-10,y1:H-10};const X=lin(-5.2,5.2,f.x0,f.x1),Y=lin(-2.1,2.1,f.y1,f.y0);
+    ctx.strokeStyle=T.line;ctx.lineWidth=1;[.25,1,2.5,5,9,14].forEach(c=>{ctx.beginPath();for(let a=0;a<=6.3;a+=.05){const px=X(Math.sqrt(2*c)*Math.cos(a)),py=Y(Math.sqrt(2*c/8)*Math.sin(a));a?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.stroke()});
+    dot(ctx,X(0),Y(0),4,T.ink);label(ctx,'mínimo',X(0)+8,Y(0)-8,T.muted);
+    const k=Math.max(1,Math.round(C.k||traj.length));const pts=traj.slice(0,k).map(([a,b])=>[X(clamp(a,-6,6)),Y(clamp(b,-2.5,2.5))]);path(ctx,pts,T.accent,1.6);pts.forEach((p,i)=>i%Math.max(1,Math.round(pts.length/40))===0&&dot(ctx,p[0],p[1],2,T.accent));
+    if(pts.length)dot(ctx,pts[pts.length-1][0],pts[pts.length-1][1],5,div?T.c2:T.accent,T.surface);dot(ctx,pts[0][0],pts[0][1],4,T.muted);label(ctx,'inicio',pts[0][0]+6,pts[0][1]-8,T.muted);
+    label(ctx,`1 época · batch ${Bs[s.bi]}`,f.x1-4,f.y0+8,T.ink,'right')};
+  sim();
+  return wrapLab(h('div',{class:'ctrls'},slider('batch_size',{min:0,max:5,step:1,value:2,fmt:i=>Bs[i],oninput:v=>{s.bi=v;sim()}}),toggle('Escalar el learning rate con el batch (regla lineal)',false,v=>{s.scale=v;sim()})),
+    h('div',{class:'stats'},sSteps,sNoise,sMem,sLR,sEnd),C.c,
+    h('p',{class:'note'},'Batch chico: muchas actualizaciones por época pero con gradiente ruidoso (el zigzag). Batch grande: gradiente más estable y mejor uso de la GPU, pero pocas actualizaciones por época y más memoria. Si además subes el learning rate en proporción, con 256 el entrenamiento puede divergir. Por eso batch_size y learning rate se ajustan juntos y dependen de la GPU y del dataset.'));
+};
+
+/* ---------- Imágenes térmicas ---------- */
+LABS.thermal=()=>{
+  const s={opt:'none',hot:.8,cm:true};const C=cv(.42,300,200);const out=h('div');const code=h('div');
+  const OPTS={none:{ok:false,msg:'RuntimeError: Given groups=1, weight of size [64, 3, 7, 7], expected input[32, 1, 224, 224] to have 3 channels, but got 1 channels instead',code:['x = thermal_batch            # [32, 1, 224, 224]','logits = model(x)            # conv1 espera 3 canales']},
+    rep:{ok:true,msg:'OK · el canal térmico se copia en R, G y B. Simple y conserva los pesos preentrenados.\nOjo: la normalización de ImageNet (mean/std RGB) no describe temperaturas; recalcúlala con datos térmicos.',code:['x = thermal_batch.repeat(1, 3, 1, 1)   # [32, 3, 224, 224]','logits = model(x)']},
+    adapt:{ok:true,msg:'OK · conv1 pasa a recibir 1 canal; sus pesos se inicializan con el promedio de los 3 canales RGB.\nAhorra cómputo en la primera capa y conserva el conocimiento de bordes y texturas.',code:['w = model.conv1.weight.data.mean(dim=1, keepdim=True)   # [64, 1, 7, 7]','model.conv1 = nn.Conv2d(1, 64, 7, stride=2, padding=3, bias=False)','model.conv1.weight.data = w']},
+    scratch:{ok:true,msg:'Funciona, pero pierde el transfer learning: necesita muchos más datos térmicos etiquetados.\nAlternativa intermedia: buscar un modelo preentrenado en imágenes térmicas o infrarrojas.',code:['model = models.resnet18(weights=None)','model.conv1 = nn.Conv2d(1, 64, 7, stride=2, padding=3, bias=False)']}};
+  const filt=[...Array(16)].map((_,k)=>{const r=mulberry(50+k);const th=k*Math.PI/8,fr=.6+r()*.6,col=[r(),r(),r()];return{th,fr,col,ph:r()*6}});
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const S=Math.min(H-40,w*.3);const n=40,cs=S/n;
+    label(ctx,'entrada térmica (1 canal)',12,12,T.muted);
+    const tv=(i,j)=>clamp(.25+.25*(i/n)+s.hot*Math.exp(-((i-24)**2+(j-26)**2)/30)+.06*Math.sin(j*.6),0,1);
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){const v=tv(i,j);let c;if(s.cm){const[r,g,b]=cmap(v);c=`rgb(${r|0},${g|0},${b|0})`}else{const g=v*255|0;c=`rgb(${g},${g},${g})`}ctx.fillStyle=c;ctx.fillRect(12+j*cs,28+i*cs,cs+.5,cs+.5)}
+    const x1=12+S+30;
+    if(s.opt==='rep'){label(ctx,'repeat(1, 3, 1, 1) → 3 copias',x1,12,T.ink);for(let c=2;c>=0;c--){const dx=x1+c*14,dy=28+c*10,sc=S*.7/n;for(let i=0;i<n;i+=2)for(let j=0;j<n;j+=2){const g=tv(i,j)*255|0;ctx.fillStyle=`rgb(${g},${g},${g})`;ctx.fillRect(dx+j*sc,dy+i*sc,sc*2+.5,sc*2+.5)}ctx.strokeStyle=T.ink;ctx.strokeRect(dx,dy,S*.7,S*.7)}}
+    else{label(ctx,s.opt==='none'?'tensor [1, 224, 224]: falta 2 canales':'tensor [1, 224, 224]',x1,12,s.opt==='none'?T.c2:T.ink);const sc=S*.7/n;for(let i=0;i<n;i+=2)for(let j=0;j<n;j+=2){const g=tv(i,j)*255|0;ctx.fillStyle=`rgb(${g},${g},${g})`;ctx.fillRect(x1+j*sc,28+i*sc,sc*2+.5,sc*2+.5)}ctx.strokeStyle=T.ink;ctx.strokeRect(x1,28,S*.7,S*.7)}
+    const x2=x1+S*.7+50;if(x2+80<w){const gs=Math.min((w-x2-12)/4,(H-40)/4)-4;const gray=s.opt==='adapt'||s.opt==='scratch';label(ctx,gray?(s.opt==='scratch'?'conv1 aleatoria [64,1,7,7]':'conv1 promediada [64,1,7,7]'):'filtros conv1 preentrenados [64,3,7,7]',x2,12,T.muted);
+      filt.forEach((F,k)=>{const gx=x2+(k%4)*(gs+4),gy=28+Math.floor(k/4)*(gs+4);const m=7,c=gs/m;const rr=mulberry(k+900);for(let i=0;i<m;i++)for(let j=0;j<m;j++){let v;if(s.opt==='scratch')v=rr();else{const u=(j-3)*Math.cos(F.th)+(i-3)*Math.sin(F.th);v=.5+.5*Math.cos(u*F.fr+F.ph)*Math.exp(-((i-3)**2+(j-3)**2)/10)}
+        if(gray){const g=v*255|0;ctx.fillStyle=`rgb(${g},${g},${g})`}else{ctx.fillStyle=`rgb(${(v*F.col[0]*255+(1-F.col[0])*v*120)|0},${(v*F.col[1]*255+(1-F.col[1])*v*120)|0},${(v*F.col[2]*255+(1-F.col[2])*v*120)|0})`}ctx.fillRect(gx+j*c,gy+i*c,c+.4,c+.4)}})}};
+  function upd(){const O=OPTS[s.opt];out.innerHTML='';out.append(h('div',{class:O.ok?'okmsg':'err'},O.msg));code.innerHTML='';code.append(codeBlock(O.code));C.draw()}
+  upd();
+  return wrapLab(h('div',{class:'presets'},h('span',{class:'lbl'},'Estrategia'),seg([['none','Sin cambios'],['rep','Repetir canal ×3'],['adapt','Adaptar conv1'],['scratch','Entrenar desde cero']],'none',v=>{s.opt=v;upd()})),
+    h('div',{class:'ctrls'},slider('Temperatura del punto caliente',{min:0,max:1,step:.05,value:.8,fmt:v=>pct(v),oninput:v=>{s.hot=v;C.draw()}}),toggle('Mostrar con mapa de color (solo visualización)',true,v=>{s.cm=v;C.draw()})),
+    C.c,code,out,h('p',{class:'note'},'El mapa de colores que se ve en pantalla no agrega canales: el sensor entrega una sola medición por píxel. Además, las texturas de ImageNet (fotos RGB) no son las de una imagen térmica, así que conviene hacer fine tuning además de adaptar la entrada.'));
+};
+
+/* ---------- train/eval/requires_grad/no_grad ---------- */
+LABS.mode=(o={})=>{
+  const s={train:o.train??true,rg:o.rg??false,ng:o.ng??false,rm:0,outs:[],seed:1,graph:false};
+  const C=cv(.42,260,190);const tbl=h('div',{class:'tw'}),outBox=h('div');
+  const W1=[...Array(8)].map((_,i)=>{const r=mulberry(i+10);return[0,1,2,3].map(()=>gauss(r)*.6)}),W2=[...Array(3)].map((_,i)=>{const r=mulberry(i+40);return[...Array(8)].map(()=>gauss(r)*.5)});const x=[.8,-.3,.5,1.1];
+  let mask=Array(8).fill(1);
+  function forward(){if(s.train){const r=mulberry(Date.now()%1e6+s.seed++);mask=mask.map(()=>r()<.5?0:2)}else mask=Array(8).fill(1);
+    const hdn=W1.map(w=>Math.max(0,w.reduce((a,v,i)=>a+v*x[i],0)));const bm=hdn.reduce((a,b)=>a+b,0)/8;
+    const norm=s.train?hdn.map(v=>v-bm):hdn.map(v=>v-s.rm);if(s.train)s.rm=.9*s.rm+.1*bm;
+    const d=norm.map((v,i)=>v*mask[i]);const out=W2.map(w=>w.reduce((a,v,i)=>a+v*d[i],0));s.graph=!s.ng;return out}
+  function runTwice(){s.outs=[forward(),forward()];upd()}
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const cols=[w*.1,w*.36,w*.62,w*.88];const ys=n=>[...Array(n)].map((_,i)=>H*.15+i*(H*.7)/(n-1));
+    const L=[ys(4),ys(8),ys(8),ys(3)];
+    ctx.lineWidth=1;for(let a=0;a<3;a++)for(const y1 of L[a])for(const[i,y2] of L[a+1].entries()){const off=a===1&&mask[i]===0||a===2&&mask[i]===0;ctx.strokeStyle=A(off?T.line:T.muted,off?.25:.28);ctx.beginPath();ctx.moveTo(cols[a],y1);ctx.lineTo(cols[a+1],y2);ctx.stroke()}
+    L.forEach((ys2,a)=>ys2.forEach((y,i)=>{const off=(a===1||a===2)&&mask[i]===0;dot(ctx,cols[a],y,7,off?T.surface2:(a===3?T.accent:T.surface),off?T.line:T.ink);if(off){ctx.strokeStyle=T.c2;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cols[a]-4,y-4);ctx.lineTo(cols[a]+4,y+4);ctx.moveTo(cols[a]+4,y-4);ctx.lineTo(cols[a]-4,y+4);ctx.stroke()}}));
+    label(ctx,'entrada',cols[0],H-12,T.muted,'center');label(ctx,s.train?'Dropout activo':'Dropout apagado',cols[1],H-12,s.train?T.c2:T.muted,'center');label(ctx,s.train?'BatchNorm: stats del batch':'BatchNorm: running_mean',cols[2],H-12,T.ink,'center');label(ctx,'logits',cols[3],H-12,T.muted,'center');
+    label(ctx,s.rg?'pesos de la base: requires_grad=True':'pesos de la base: congelados (requires_grad=False)',w/2,12,s.rg?T.accent:T.muted,'center')};
+  function upd(){const upd_=s.rg&&!s.ng;const rows=[['Dropout',s.train?'apaga neuronas al azar':'desactivado',s.train?'warn':'ok'],
+    ['BatchNorm',s.train?'normaliza con el batch y actualiza running_mean':'usa running_mean / running_var fijos',s.train?'warn':'ok'],
+    ['running_mean cambia',s.train?'sí, aunque los pesos estén congelados':'no',s.train?'bad':'ok'],
+    ['Se construye grafo de gradientes',s.ng?'no (torch.no_grad)':'sí (la fc entrenable siempre lo pide)',s.ng?'ok':'warn'],
+    ['optimizer.step() modifica la base',upd_?'sí':'no',upd_?'warn':'ok'],
+    ['Memoria por activaciones guardadas',s.ng?'baja':'alta','']];
+    tbl.innerHTML='';tbl.append(h('table',{class:'t'},h('tr',{},h('th',{},'Efecto'),h('th',{},'Estado actual')),rows.map(([a,b,t])=>h('tr',{},h('td',{},a),h('td',{style:`color:var(--${t==='bad'?'c2':t==='warn'?'c1':t==='ok'?'c0':'ink'})`},b)))));
+    outBox.innerHTML='';if(s.outs.length){const[a,b]=s.outs;const same=a.every((v,i)=>Math.abs(v-b[i])<1e-9);outBox.append(h('div',{class:same?'okmsg':'err'},`forward 1 → [${a.map(v=>num(v,3)).join(', ')}]\nforward 2 → [${b.map(v=>num(v,3)).join(', ')}]\n${same?'Idénticos: el modelo es determinista en eval().':'Distintos con la misma imagen: Dropout y BatchNorm en modo train.'}\nrunning_mean = ${num(s.rm,4)}   grad_fn = ${s.graph?'<AddmmBackward0>':'None'}`))}
+    C.draw()}
+  runTwice();
+  return wrapLab(h('div',{class:'ctrls'},h('div',{class:'presets'},h('span',{class:'lbl'},'Modo'),seg([[true,'model.train()'],[false,'model.eval()']],s.train,v=>{s.train=v;runTwice()})),
+    toggle('requires_grad=True en la base',s.rg,v=>{s.rg=v;upd()}),toggle('with torch.no_grad()',s.ng,v=>{s.ng=v;runTwice()}),btn('Forward ×2 con la misma imagen',runTwice,'btn primary small')),
+    h('div',{class:'split'},C.c,tbl),outBox,
+    h('p',{class:'note'},'ResNet18 no trae Dropout, pero sí BatchNorm. Por eso, aunque congeles todos los pesos con requires_grad=False, si validas en modo train las estadísticas de BatchNorm cambian con cada batch. eval() cambia el comportamiento de capas; requires_grad decide qué se entrena; no_grad decide si se guarda el grafo.'));
+};
+
+/* ---------- Fine tuning ---------- */
+LABS.finetune=(o={})=>{
+  const BL=[['conv1+bn1',9536],['layer1',147968],['layer2',525568],['layer3',2099712],['layer4',8393728],['fc',1539]];const TOT=BL.reduce((a,b)=>a+b[1],0);
+  const s={fr:[true,true,true,true,true,false],ep:1,prog:false};
+  const LR=['1e-5','1e-5','1e-5','3e-5','1e-4','1e-3'];
+  const blocks=h('div',{class:'blocks'}),fw=h('div',{class:'rail2'},h('i',{style:'background:var(--muted);left:0;width:100%'})),bw=h('div',{class:'rail2'},h('i',{style:'background:var(--accent)'}));
+  const sT=stat('Parámetros entrenables'),sP=stat('% del modelo'),sB=stat('Backward llega hasta'),sF=stat('Forward pasa por');const lrBox=h('div');
+  const epSl=slider('Época (descongelamiento progresivo)',{min:1,max:12,step:1,value:1,fmt:v=>v,oninput:v=>{s.ep=v;if(s.prog){applyProg();upd()}}});
+  function applyProg(){s.fr=[true,true,true,s.ep<9,s.ep<5,false]}
+  function upd(){blocks.innerHTML='';BL.forEach(([n,p],i)=>{const b=h('button',{type:'button',class:'blk '+(s.fr[i]?'frozen':'train'),onclick:()=>{if(i===5)return;s.prog=false;s.fr[i]=!s.fr[i];upd()}},h('span',{class:'bn'},n),h('span',{class:'bp'},fmtN(p)),h('span',{class:'bs'},s.fr[i]?'congelado':'entrena'));blocks.append(b)});
+    const tr=BL.reduce((a,b,i)=>a+(s.fr[i]?0:b[1]),0);const first=s.fr.indexOf(false);sT.set(fmtN(tr));sP.set(pct(tr/TOT,2));sB.set(BL[first][0],first<3?'warn':'');sF.set('todos los bloques');
+    bw.firstChild.style.left=(first/6*100)+'%';bw.firstChild.style.width=((6-first)/6*100)+'%';
+    lrBox.innerHTML='';lrBox.append(h('table',{class:'t'},h('tr',{},h('th',{},'Grupo'),h('th',{},'learning rate sugerido')),...BL.map(([n],i)=>s.fr[i]?null:h('tr',{},h('td',{},n),h('td',{class:'mono'},LR[i])))))}
+  const pre=h('div',{class:'presets'},h('span',{class:'lbl'},'Estrategia'),
+    btn('Feature extraction (notebook)',()=>{s.prog=false;s.fr=[true,true,true,true,true,false];upd()}),
+    btn('Descongelar layer4',()=>{s.prog=false;s.fr=[true,true,true,true,false,false];upd()}),
+    btn('Progresivo por épocas',()=>{s.prog=true;applyProg();upd()}),
+    btn('Todo de golpe',()=>{s.prog=false;s.fr=[false,false,false,false,false,false];upd()}));
+  upd();
+  return wrapLab(pre,blocks,h('div',{style:'display:grid;gap:6px'},h('div',{class:'lbl'},'Forward: la imagen atraviesa todo, aunque esté congelado'),fw,h('div',{class:'lbl'},'Backward: los gradientes solo viajan hasta el primer bloque entrenable'),bw),
+    h('div',{class:'stats'},sT,sP,sB,sF),h('div',{class:'split even'},h('div',{style:'display:grid;gap:8px'},epSl,h('p',{class:'note'},'Progresivo: épocas 1–4 solo fc; 5–8 se suma layer4; desde la 9 se suma layer3. Cada bloque nuevo entra con un learning rate menor para no borrar lo aprendido en ImageNet.')),lrBox),
+    h('p',{class:'note'},'Toca los bloques para congelarlos o descongelarlos. Congelar ahorra gradientes y memoria del optimizador, pero no ahorra el forward: la imagen igual pasa por todas las capas.'));
+};
+
+/* ---------- fc.in_features ---------- */
+LABS.fc=()=>{
+  const AR={resnet18:['ResNet18','model.fc',512],resnet34:['ResNet34','model.fc',512],resnet50:['ResNet50','model.fc',2048],mobilenet:['MobileNetV2','model.classifier[1]',1280],effb0:['EfficientNet-B0','model.classifier[1]',1280]};
+  const s={a:'resnet18',k:3,hard:false,hv:512};const C=cv(.36,240,170);const out=h('div'),code=h('div');
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const inF=AR[s.a][2];const nIn=Math.min(24,Math.round(inF/64)),x1=w*.25,x2=w*.72;
+    const yi=i=>16+i*(H-32)/(nIn-1),yo=i=>H/2+(i-(s.k-1)/2)*Math.min(38,(H-40)/s.k);
+    ctx.lineWidth=.6;for(let i=0;i<nIn;i++)for(let j=0;j<s.k;j++){ctx.strokeStyle=A(T.accent,.22);ctx.beginPath();ctx.moveTo(x1,yi(i));ctx.lineTo(x2,yo(j));ctx.stroke()}
+    for(let i=0;i<nIn;i++)dot(ctx,x1,yi(i),3,T.muted);for(let j=0;j<s.k;j++){dot(ctx,x2,yo(j),9,T.accent);label(ctx,['Intacto','Óxido','Crítico','Clase 3','Clase 4'][j],x2+16,yo(j),T.ink)}
+    label(ctx,`${inF} features`,x1-10,H/2,T.ink,'right',undefined,FM(12,'600'));label(ctx,'(avgpool de la base)',x1-10,H/2+16,T.muted,'right');label(ctx,`${s.k} logits`,x2,8,T.ink,'center','top')};
+  function upd(){const[nm,attr,inF]=AR[s.a];const used=s.hard?s.hv:inF;const ok=used===inF;
+    code.innerHTML='';code.append(codeBlock(s.hard?[`${attr} = nn.Linear(${s.hv}, NUM_CLASSES)   # número escrito a mano`]:[`in_features = ${attr}.in_features   # ${inF} en ${nm}`,`${attr} = nn.Linear(in_features, NUM_CLASSES)`]));
+    out.innerHTML='';out.append(h('div',{class:ok?'okmsg':'err'},ok?`OK · Linear(${inF}, ${s.k}) → ${fmtN(inF*s.k+s.k)} parámetros entrenables (${inF}×${s.k} pesos + ${s.k} sesgos)`:`RuntimeError: mat1 and mat2 shapes cannot be multiplied (32x${inF} and ${s.hv}x${s.k})\nLa base de ${nm} entrega ${inF} features, no ${s.hv}.`));C.draw()}
+  upd();
+  return wrapLab(h('div',{class:'presets'},h('span',{class:'lbl'},'Arquitectura'),seg(Object.entries(AR).map(([k,v])=>[k,v[0]]),'resnet18',v=>{s.a=v;upd()})),
+    h('div',{class:'ctrls'},slider('NUM_CLASSES',{min:2,max:5,step:1,value:3,fmt:v=>v,oninput:v=>{s.k=v;upd()}}),toggle('Escribir in_features a mano (512)',false,v=>{s.hard=v;upd()})),C.c,code,out,
+    h('p',{class:'note'},'Leer in_features hace que el código se adapte solo si cambias de arquitectura. Prueba: activa "a mano" y elige ResNet50.'));
+};
+
+/* ---------- weight_decay vs learning rate ---------- */
+LABS.wd=()=>{
+  const s={lr:.15,wd:0};const a=1,b=.3;const C=cv(.55,340,220);const play=player(C.c);let traj=[],div=false;
+  const sN=stat('‖w‖ final'),sE=stat('Punto de llegada'),sS=stat('Pasos para estabilizar'),sL=stat('Pérdida de datos final');
+  const L=(x,y)=>a*(x-3)**2+b*(y-2)**2;
+  function sim(){let x=-2.5,y=-2.5;traj=[[x,y]];div=false;let settle=null;for(let i=0;i<160;i++){const gx=2*a*(x-3)+s.wd*x,gy=2*b*(y-2)+s.wd*y;const nx=x-s.lr*gx,ny=y-s.lr*gy;if(settle===null&&Math.hypot(nx-x,ny-y)<2e-3)settle=i;x=nx;y=ny;traj.push([x,y]);if(Math.abs(x)>40||Math.abs(y)>40){div=true;break}}
+    const ex=2*a*3/(2*a+s.wd),ey=2*b*2/(2*b+s.wd);const[fx,fy]=traj[traj.length-1];
+    sN.set(div?'∞':num(Math.hypot(fx,fy),2),div?'bad':'');sE.set(div?'diverge':`(${num(ex,2)}, ${num(ey,2)})`,div?'bad':'');sS.set(div?'—':settle===null?'>160':String(settle),div?'bad':'');sL.set(div?'—':num(L(fx,fy),3));
+    play(traj.length,k=>{C.k=k;C.draw()},2)}
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const f={x0:34,y0:14,x1:w-14,y1:H-26};const X=lin(-3,4.5,f.x0,f.x1),Y=lin(-3,3.5,f.y1,f.y0);
+    axes(ctx,f,X,Y,{xt:[-2,0,2,4],yt:[-2,0,2],xl:'w₁',yl:'w₂'});
+    ctx.strokeStyle=T.line;[.3,1,2.5,5,9,15].forEach(c=>{ctx.beginPath();for(let t=0;t<=6.3;t+=.05){const px=X(3+Math.sqrt(c/a)*Math.cos(t)),py=Y(2+Math.sqrt(c/b)*Math.sin(t));t?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.stroke()});
+    ctx.save();ctx.setLineDash([3,4]);ctx.strokeStyle=A(T.signal,.6);[1,2,3,4].forEach(r=>{ctx.beginPath();ctx.ellipse(X(0),Y(0),X(r)-X(0),Y(0)-Y(r),0,0,7);ctx.stroke()});ctx.restore();
+    dot(ctx,X(0),Y(0),3,T.signal);label(ctx,'0',X(0)+6,Y(0)+8,T.signal);dot(ctx,X(3),Y(2),5,T.ink);label(ctx,'mínimo sin regularizar',X(3)+8,Y(2)-10,T.ink);
+    const k=Math.max(1,Math.round(C.k||traj.length));const pts=traj.slice(0,k).map(([x,y])=>[X(clamp(x,-3.5,5)),Y(clamp(y,-3.5,4))]);path(ctx,pts,T.accent,2);pts.forEach(p=>dot(ctx,p[0],p[1],1.6,T.accent));
+    const e=pts[pts.length-1];dot(ctx,e[0],e[1],6,div?T.c2:T.accent,T.surface)};
+  sim();
+  return wrapLab(h('div',{class:'ctrls'},slider('learning_rate',{min:.02,max:1.05,step:.01,value:s.lr,fmt:v=>num(v,2),oninput:v=>{s.lr=v;sim()}}),slider('weight_decay',{min:0,max:2,step:.05,value:0,fmt:v=>num(v,2),oninput:v=>{s.wd=v;sim()}})),
+    h('div',{class:'stats'},sE,sN,sS,sL),C.c,legend([[T.line||'#ccc','curvas de nivel de la pérdida de datos'],[T.signal||'#C97A12','círculos de ‖w‖ (lo que penaliza weight_decay)'],[T.accent||'#0A6889','trayectoria del descenso']]),
+    h('p',{class:'note'},'Mueve solo el learning rate: cambia la velocidad y la estabilidad del camino, pero llega al mismo punto. Mueve weight_decay: el punto de llegada se desplaza hacia el origen porque la pérdida ahora premia pesos pequeños. En torch.optim.Adam, weight_decay suma λ·w al gradiente (L2); AdamW lo aplica desacoplado.'));
+};
+
+/* ---------- Reproducibilidad float ---------- */
+LABS.float=()=>{
+  const r=mulberry(SEED);const N=20000;const xs=new Float32Array(N);for(let i=0;i<N;i++)xs[i]=Math.fround((r()-.5)*Math.pow(10,Math.floor(r()*7)-3));
+  let blockSeed=1;const box=h('div',{class:'tw'});
+  const f32sum=(order)=>{let s=0;for(const i of order)s=Math.fround(s+xs[i]);return s};
+  const tree=(lo,hi)=>hi-lo===1?xs[lo]:Math.fround(tree(lo,(lo+hi)>>1)+tree((lo+hi)>>1,hi));
+  function blocks(seed){const rr=mulberry(seed);const nb=Math.ceil(N/256);const ord=shuffle(nb,rr);let s=0;for(const b of ord){let p=0;for(let i=b*256;i<Math.min(N,(b+1)*256);i++)p=Math.fround(p+xs[i]);s=Math.fround(s+p)}return s}
+  function upd(){const seq=f32sum([...Array(N).keys()]);let ex=0,c=0;for(let i=0;i<N;i++){const y=xs[i]-c,t=ex+y;c=(t-ex)-y;ex=t}
+    const rows=[['Secuencial (CPU, un hilo)',seq],['Orden inverso',f32sum([...Array(N).keys()].reverse())],['Reducción en árbol',tree(0,N)],[`Bloques de 256 hilos, orden #${blockSeed}`,blocks(blockSeed)],[`Bloques de 256 hilos, orden #${blockSeed+1}`,blocks(blockSeed+1)],['Referencia de alta precisión',ex]];
+    const ref=seq.toPrecision(10);box.innerHTML='';box.append(h('table',{class:'t'},h('tr',{},h('th',{},'Forma de sumar los mismos 20.000 float32'),h('th',{},'Resultado'),h('th',{},'Diferencia vs secuencial')),
+      rows.map(([n,v])=>{const sv=v.toPrecision(10);let html='';for(let i=0;i<sv.length;i++){html+=sv[i]!==ref[i]?`<span style="color:var(--c2);font-weight:600">${sv[i]}</span>`:sv[i]}return h('tr',{},h('td',{},n),h('td',{class:'mono',html}),h('td',{class:'mono'},(v-seq).toExponential(2)))})))}
+  upd();
+  return wrapLab(h('div',{class:'presets'},btn('Otro reparto de hilos en la GPU',()=>{blockSeed+=2;upd()},'btn primary small')),box,
+    h('p',{class:'note'},'La suma en punto flotante no es asociativa: (a + b) + c puede diferir de a + (b + c) en los últimos dígitos. En GPU, miles de hilos suman en un orden que puede variar entre ejecuciones (atomics, cuDNN elige algoritmos distintos), así que dos personas con la misma semilla pueden ver diferencias pequeñas sin haber programado mal. Para acotarlo: torch.backends.cudnn.deterministic = True, benchmark = False, torch.use_deterministic_algorithms(True) y misma versión de librerías y hardware.'));
+};
+
+/* ---------- Ciclo zero_grad / backward / step ---------- */
+LABS.loop=(o={})=>{
+  const s={w:-2,g:0,loss:null,fwd:false,lr:.3,zg:o.zg??true,hist:[-2],log:[],auto:null};
+  const C=cv(.42,240,170),Hc=cv(.42,240,170);const sW=stat('w (peso)'),sG=stat('w.grad'),sLs=stat('loss');const logBox=h('div',{class:'oplog'});
+  const L=w=>.5*(w-3)**2;
+  const lg=(t,c='')=>{s.log.push([t,c]);if(s.log.length>9)s.log.shift()};
+  const ops={
+    zero:()=>{s.g=0;lg('optimizer.zero_grad()   # grad = 0')},
+    fwd:()=>{s.loss=L(s.w);s.fwd=true;lg(`loss = criterion(model(x), y)   # ${num(s.loss,3)}`)},
+    bwd:()=>{if(!s.fwd){lg('loss.backward()  → primero haz forward','bad');return}const gi=s.w-3;s.g+=gi;s.fwd=false;lg(`loss.backward()   # grad += ${num(gi,3)} → ${num(s.g,3)}`)},
+    step:()=>{const d=-s.lr*s.g;s.w+=d;s.hist.push(s.w);if(s.hist.length>60)s.hist.shift();lg(`optimizer.step()   # w ${d>=0?'+':''}${num(d,3)} → ${num(s.w,3)}`)}};
+  function cycle(){if(s.zg)ops.zero();ops.fwd();ops.bwd();ops.step();upd()}
+  function reset(){Object.assign(s,{w:-2,g:0,loss:null,fwd:false,hist:[-2],log:[]});upd()}
+  function upd(){sW.set(num(s.w,3));sG.set(num(s.g,3),Math.abs(s.g)>8?'bad':'');sLs.set(s.loss==null?'–':num(s.loss,3));logBox.innerHTML='';s.log.forEach(([t,c])=>logBox.append(h('div',{class:c},t)));if(!s.log.length)logBox.append(h('div',{class:'dim'},'# usa los botones o el ciclo automático'));C.draw();Hc.draw()}
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const f={x0:30,y0:14,x1:w-14,y1:H-26};const X=lin(-4,10,f.x0,f.x1),Y=lin(0,22,f.y1,f.y0);axes(ctx,f,X,Y,{xt:[-4,0,3,6,10],xl:'w',yl:'loss = ½(w − 3)²'});
+    const p=[];for(let w2=-4;w2<=10;w2+=.1)p.push([X(w2),Y(L(w2))]);path(ctx,p,T.muted,2);const cw=clamp(s.w,-4,10);dot(ctx,X(cw),Y(Math.min(22,L(cw))),7,T.accent,T.surface);
+    if(s.g){const d=-s.lr*s.g;const tx=clamp(s.w+d,-4,10);ctx.strokeStyle=T.signal;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(cw),Y(Math.min(22,L(cw)))-14);ctx.lineTo(X(tx),Y(Math.min(22,L(cw)))-14);ctx.stroke();label(ctx,'−lr·grad',(X(cw)+X(tx))/2,Y(Math.min(22,L(cw)))-24,T.signal,'center')}};
+  Hc.draw=()=>{const{ctx,w,h:H}=Hc;readT();ctx.clearRect(0,0,w,H);const f={x0:30,y0:14,x1:w-14,y1:H-26};const n=Math.max(20,s.hist.length);const X=lin(0,n-1,f.x0,f.x1),Y=lin(-6,12,f.y1,f.y0);axes(ctx,f,X,Y,{yt:[-6,0,3,6,12],xl:'pasos →',yl:'w en el tiempo'});
+    ctx.save();ctx.strokeStyle=T.c0;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(f.x0,Y(3));ctx.lineTo(f.x1,Y(3));ctx.stroke();ctx.restore();label(ctx,'óptimo',f.x1,Y(3)-8,T.c0,'right');
+    path(ctx,s.hist.map((v,i)=>[X(i),Y(clamp(v,-6,12))]),T.accent,2)};
+  const autoBtn=btn('▶ Ciclo automático',()=>{if(s.auto){clearInterval(s.auto);s.auto=null;autoBtn.textContent='▶ Ciclo automático'}else{s.auto=setInterval(()=>{if(!document.body.contains(autoBtn)){clearInterval(s.auto);return}cycle()},RM?600:350);autoBtn.textContent='❚❚ Pausar'}},'btn primary small');
+  upd();
+  return wrapLab(h('div',{class:'presets'},h('span',{class:'lbl'},'Manual'),btn('zero_grad()',()=>{ops.zero();upd()}),btn('forward + loss',()=>{ops.fwd();upd()}),btn('loss.backward()',()=>{ops.bwd();upd()}),btn('optimizer.step()',()=>{ops.step();upd()}),btn('Reiniciar',reset)),
+    h('div',{class:'ctrls'},toggle('Incluir optimizer.zero_grad() en cada ciclo',s.zg,v=>{s.zg=v}),autoBtn,btn('Un ciclo',cycle)),
+    h('div',{class:'stats'},sW,sG,sLs),h('div',{class:'split even'},h('div',{style:'display:grid;gap:8px;min-width:0'},C.c,Hc.c),logBox),
+    h('p',{class:'note'},'backward() solo calcula y SUMA gradientes en w.grad; step() es quien modifica w usando ese gradiente. Sin zero_grad(), cada backward se acumula sobre el anterior: el paso usa la suma de todos los gradientes pasados y w oscila sin converger. Apaga zero_grad y deja correr el ciclo automático.'));
+};
+
+/* ---------- Curvas: overfitting ---------- */
+LABS.curves=()=>{
+  const s={cap:3,data:1050,reg:.2,pat:2};const C=cv(.45,300,200);const play=player(C.c);const sB=stat('Mejor época (val)'),sS=stat('Early stopping detiene en'),sG=stat('Brecha val − train al final');let tr=[],va=[];
+  function sim(){const r=mulberry(SEED+s.cap*7+Math.round(s.data)+Math.round(s.reg*100));tr=[];va=[];const over=.016*s.cap*(1-.75*s.reg)*Math.sqrt(1050/s.data),e0=3+3*s.reg+s.data/2500;
+    for(let e=1;e<=20;e++){const t=Math.max(.04,.32-.05*s.cap)+.85*Math.exp(-.28*e*(.7+.15*s.cap));const v=t+.06+over*Math.max(0,e-e0)**1.35+gauss(r)*.012;tr.push(t);va.push(v)}
+    const best=va.indexOf(Math.min(...va))+1;let stop=20,bv=1e9,since=0;for(let e=1;e<=20;e++){if(va[e-1]<bv-1e-4){bv=va[e-1];since=0}else if(++since>=s.pat){stop=e;break}}
+    sB.set(String(best));sS.set(stop<20?`época ${stop}`:'no se activa',stop<20?'ok':'');sG.set(num(va[19]-tr[19],3),va[19]-tr[19]>.25?'bad':va[19]-tr[19]>.12?'warn':'ok');C.best=best;C.stop=stop;play(20,k=>{C.k=k;C.draw()},.35)}
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const f={x0:40,y0:14,x1:w-14,y1:H-28};const mx=Math.max(1.2,...va.map(v=>Math.min(v,2)));const X=lin(1,20,f.x0,f.x1),Y=lin(0,mx,f.y1,f.y0);
+    if(C.best<20){ctx.fillStyle=A(T.c2,.07);ctx.fillRect(X(C.best),f.y0,f.x1-X(C.best),f.y1-f.y0);label(ctx,'zona de sobreajuste',f.x1-6,f.y0+10,T.c2,'right')}
+    axes(ctx,f,X,Y,{xt:[1,5,10,15,20],yt:[0,.5,1],fy:v=>num(v,1),xl:'época →',yl:'loss'});const k=Math.max(1,Math.floor(C.k||20));
+    path(ctx,tr.slice(0,k).map((v,i)=>[X(i+1),Y(v)]),T.accent,2.5);path(ctx,va.slice(0,k).map((v,i)=>[X(i+1),Y(Math.min(v,mx))]),T.c2,2.5);
+    if(k>=C.best){dot(ctx,X(C.best),Y(va[C.best-1]),6,T.c0,T.surface);label(ctx,'mejor checkpoint',X(C.best),Y(va[C.best-1])+16,T.c0,'center')}
+    if(C.stop<20&&k>=C.stop){ctx.save();ctx.strokeStyle=T.ink;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(X(C.stop),f.y0);ctx.lineTo(X(C.stop),f.y1);ctx.stroke();ctx.restore();label(ctx,'stop',X(C.stop)+4,f.y0+24,T.ink)}};
+  sim();
+  return wrapLab(h('div',{class:'ctrls'},slider('Capacidad (bloques descongelados)',{min:1,max:5,step:1,value:3,fmt:v=>v,oninput:v=>{s.cap=v;sim()}}),slider('Imágenes de entrenamiento',{min:300,max:6000,step:50,value:1050,fmt:v=>fmtN(v),oninput:v=>{s.data=v;sim()}}),
+    slider('Regularización (augmentation + weight_decay)',{min:0,max:1,step:.05,value:.2,fmt:v=>pct(v),oninput:v=>{s.reg=v;sim()}}),slider('Paciencia del early stopping',{min:1,max:6,step:1,value:2,fmt:v=>v+' épocas',oninput:v=>{s.pat=v;sim()}})),
+    h('div',{class:'stats'},sB,sS,sG),C.c,legend([[T.accent||'#0A6889','train loss'],[T.c2||'#C2332A','validation loss']]),
+    h('p',{class:'note'},'Simulación ilustrativa. Cuando train sigue bajando y validación sube, el modelo memoriza el entrenamiento: es sobreajuste. Se guarda el checkpoint con mejor validación, se detiene con early stopping y se agrega regularización o más datos. Sube la capacidad y baja los datos para ver cómo se adelanta.'));
+};
+
+/* ---------- Devices ---------- */
+LABS.device=()=>{
+  const s={model:'cuda',images:'cpu',labels:'cpu',weights:'cpu'};const NM={model:'model',images:'images',labels:'labels',weights:'class_weights (criterion)'};
+  const zc=h('div',{class:'zone'},h('h4',{},'CPU')),zg=h('div',{class:'zone'},h('h4',{},'GPU · cuda:0'));const res=h('div',{class:'stage-list'}),fix=h('div');
+  function upd(){[zc,zg].forEach(z=>{while(z.children.length>1)z.lastChild.remove()});Object.keys(s).forEach(k=>{(s[k]==='cpu'?zc:zg).append(h('button',{type:'button',class:'dev',onclick:()=>{s[k]=s[k]==='cpu'?'cuda':'cpu';upd()}},NM[k]))});
+    res.innerHTML='';let err=null;
+    if(s.model!==s.images)err=['1 · logits = model(images)',s.model==='cuda'?'RuntimeError: Input type (torch.FloatTensor) and weight type (torch.cuda.FloatTensor) should be the same':'RuntimeError: Input type (torch.cuda.FloatTensor) and weight type (torch.FloatTensor) should be the same'];
+    const stages=[['1 · logits = model(images)',s.model===s.images],['2 · loss = criterion(logits, labels)',s.model===s.images&&s.labels===s.model&&s.weights===s.model],['3 · loss.backward(); optimizer.step()',null]];
+    if(!err&&!(s.labels===s.model&&s.weights===s.model))err=['2 · loss',`RuntimeError: Expected all tensors to be on the same device, but found at least two devices, ${s.model==='cuda'?'cuda:0 and cpu':'cpu and cuda:0'}!`];
+    let blocked=false;stages.forEach(([n,ok],i)=>{if(i===2)ok=!err;const st=blocked?'—':ok?'✓':'✗';res.append(h('div',{class:'rules'},h('li',{class:blocked?'':ok?'ok':'bad'},h('span',{class:'m'},st),h('span',{class:'mono',style:'font-size:13px'},n))));if(!ok)blocked=true});
+    if(err)res.append(h('div',{class:'err'},err[1]));else res.append(h('div',{class:'okmsg'},s.model==='cuda'?'Todo en cuda:0 ✓ el batch se entrena en la GPU.':'Todo en CPU: funciona, pero lento. ¿Olvidaste model.to(device)?'));
+    fix.innerHTML='';fix.append(codeBlock(['model = model.to(device)                       # antes de crear el optimizer','criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))','for images, labels in loader:','    images = images.to(device, non_blocking=True)','    labels = labels.to(device, non_blocking=True)']))}
+  upd();
+  return wrapLab(h('div',{class:'presets'},h('span',{class:'lbl'},'Escenarios'),btn('Error típico: batch en CPU',()=>{Object.assign(s,{model:'cuda',images:'cpu',labels:'cpu',weights:'cpu'});upd()}),btn('Solo faltan los pesos de clase',()=>{Object.assign(s,{model:'cuda',images:'cuda',labels:'cuda',weights:'cpu'});upd()}),btn('Todo correcto',()=>{Object.assign(s,{model:'cuda',images:'cuda',labels:'cuda',weights:'cuda'});upd()})),
+    h('p',{class:'note'},'Toca cada objeto para moverlo entre CPU y GPU.'),h('div',{class:'zones'},zc,zg),res,fix);
+};
+
+/* ---------- Cambio de distribución día/noche ---------- */
+LABS.shift=()=>{
+  const s={night:30,aug:false};const C=cv(.45,300,200);const sV=stat('Validación (días soleados)'),sP=stat('Producción (mezcla)'),sD=stat('Producción · día'),sN=stat('Producción · noche');
+  const acc=b=>.34+.6*sigmoid((b-(s.aug?.17:.42))/.045);const day=b=>pdf(b,.7,.09),nig=b=>pdf(b,.2,.07);
+  const E=(fn)=>{let a=0,z=0;for(let b=0;b<=1;b+=.005){a+=acc(b)*fn(b);z+=fn(b)}return a/z};
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const f={x0:40,y0:14,x1:w-44,y1:H-28};const X=lin(0,1,f.x0,f.x1);const mx=Math.max(pdf(.7,.7,.09),pdf(.2,.2,.07)*s.night/100+pdf(.2,.7,.09));const Y=lin(0,mx*1.1,f.y1,f.y0),Ya=lin(0,1,f.y1,f.y0);
+    axes(ctx,f,X,Y,{xt:[0,.25,.5,.75,1],fx:v=>num(v,2),xl:'brillo medio de la imagen →'});
+    const area=(fn,col,a)=>{ctx.beginPath();ctx.moveTo(X(0),Y(0));for(let b=0;b<=1;b+=.005)ctx.lineTo(X(b),Y(fn(b)));ctx.lineTo(X(1),Y(0));ctx.closePath();ctx.fillStyle=A(col,a);ctx.fill()};
+    const prod=b=>(1-s.night/100)*day(b)+s.night/100*nig(b);area(day,T.accent,.18);area(prod,T.signal,.22);
+    const pa=[];for(let b=0;b<=1;b+=.005)pa.push([X(b),Ya(acc(b))]);path(ctx,pa,T.ink,2.5);
+    ctx.font=FM(10.5);ctx.fillStyle=T.muted;ctx.textAlign='left';[0,.5,1].forEach(v=>ctx.fillText(Math.round(v*100)+'%',f.x1+6,Ya(v)));label(ctx,'accuracy del modelo según brillo',f.x1,f.y0+4,T.ink,'right')};
+  function upd(){const v=E(day),pd=E(day),pn=E(nig),pp=(1-s.night/100)*pd+s.night/100*pn;sV.set(pct(v),'ok');sP.set(pct(pp),pp<v-.1?'bad':pp<v-.03?'warn':'ok');sD.set(pct(pd));sN.set(pct(pn),pn<.7?'bad':'ok');C.draw()}
+  upd();
+  return wrapLab(h('div',{class:'ctrls'},slider('Imágenes nocturnas en producción',{min:0,max:80,step:5,value:30,fmt:v=>v+' %',oninput:v=>{s.night=v;upd()}}),toggle('Entrenar con imágenes nocturnas o augmentation de brillo',false,v=>{s.aug=v;upd()})),
+    h('div',{class:'stats'},sV,sP,sD,sN),C.c,legend([[A(T.accent||'#0A6889',.35),'distribución en entrenamiento y validación',1],[A(T.signal||'#C97A12',.4),'distribución en producción',1],[T.ink||'#12202A','accuracy según brillo']]),
+    h('p',{class:'note'},'Es un cambio de distribución (covariate shift o data drift): las entradas de producción ya no se parecen a las de entrenamiento. Se comprueba evaluando por subgrupo (día y noche por separado), comparando histogramas de brillo entre entrenamiento y producción y monitoreando métricas en el tiempo.'));
+};
+
+/* ---------- Grad-CAM ---------- */
+LABS.gradcam=(o={})=>{
+  const s={model:o.model??'good',layer:o.layer??'layer4',alpha:.45,patches:[]};const G={layer2:28,layer3:14,layer4:7};
+  const FEAT={dmg:[.68,.42],rust:[.45,.32],logo:[.28,.64]};
+  const C=cv(.62,380,240);const sP=stat('p(Daño crítico)'),sPr=stat('Predicción');const msg=h('div',{class:'callout info'});let rect={x:0,y:0,s:1};
+  const vis=k=>!s.patches.some(([px,py])=>Math.abs(px-FEAT[k][0])<.1&&Math.abs(py-FEAT[k][1])<.1);
+  const prob=()=>{const d=vis('dmg')?1:0,l=vis('logo')?1:0,r=vis('rust')?1:0;return sigmoid(s.model==='good'?-2.2+4.8*d+.3*r:-2.4+4.6*l+.5*d)};
+  function cam(n){const W=s.model==='good'?[['dmg',1,.08],['rust',.3,.07],['logo',.06,.08]]:[['logo',1,.1],['dmg',.15,.08],['rust',.08,.07]];const r=mulberry(n*13+(s.model==='good'?1:2));const m=[];let mn=1e9,mx=-1e9;
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){const x=(j+.5)/n,y=(i+.5)/n;let v=.05*r();for(const[k,w,sg]of W)if(vis(k))v+=w*Math.exp(-((x-FEAT[k][0])**2+(y-FEAT[k][1])**2)/(2*sg*sg));if(s.patches.some(([px,py])=>Math.abs(px-x)<.09&&Math.abs(py-y)<.09))v*=.2;m.push(v);mn=Math.min(mn,v);mx=Math.max(mx,v)}
+    return m.map(v=>(v-mn)/(mx-mn+1e-8))}
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const S=Math.min(w-20,H-20);rect={x:(w-S)/2,y:(H-S)/2,s:S};drawRoof(ctx,rect.x,rect.y,S,S);
+    s.patches.forEach(([px,py])=>{ctx.fillStyle='#777';ctx.fillRect(rect.x+(px-.09)*S,rect.y+(py-.09)*S,.18*S,.18*S)});
+    if(s.layer!=='fc'){const n=G[s.layer];const m=cam(n);const oc=document.createElement('canvas');oc.width=n;oc.height=n;const oct=oc.getContext('2d');const id=oct.createImageData(n,n);m.forEach((v,i)=>{const[r,g,b]=cmap(v);id.data[i*4]=r;id.data[i*4+1]=g;id.data[i*4+2]=b;id.data[i*4+3]=255});oct.putImageData(id,0,0);
+      ctx.save();ctx.globalAlpha=s.alpha;ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(oc,rect.x,rect.y,S,S);ctx.restore();label(ctx,`${n}×${n} → 224×224`,rect.x+6,rect.y+12,'#fff',undefined,undefined,FM(11,'600'))}
+    else{ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(rect.x,rect.y+S/2-30,S,60);label(ctx,'fc: salida [1, 3] · sin alto ni ancho',rect.x+S/2,rect.y+S/2-8,'#fff','center',undefined,FM(12,'600'));label(ctx,'no hay dónde dibujar un mapa',rect.x+S/2,rect.y+S/2+12,'#fff','center')}};
+  C.c.addEventListener('click',e=>{const b=C.c.getBoundingClientRect();const x=(e.clientX-b.left-rect.x)/rect.s,y=(e.clientY-b.top-rect.y)/rect.s;if(x<0||x>1||y<0||y>1)return;s.patches.push([x,y]);if(s.patches.length>3)s.patches.shift();upd()});
+  function upd(){const p=prob();sP.set(pct(p),p>.5?'bad':'ok');sPr.set(p>.5?'Daño crítico':'Intacto');
+    const lv=vis('logo'),dv=vis('dmg');msg.innerHTML='';
+    msg.append(s.patches.length?(s.model==='logo'?(lv?'Tapaste partes del techo pero no el logo: la predicción casi no cambia.':(dv?'Tapaste el logo y la predicción se desplomó aunque la abolladura sigue visible: el modelo usa un atajo.':'Logo y daño tapados.')):(dv?'El daño sigue visible: la predicción se mantiene.':'Tapaste el daño y la predicción cae: evidencia más fuerte que el mapa solo.')):'Toca la imagen para tapar una zona (máx. 3 parches). Es una prueba de oclusión: si tapar la zona caliente no cambia la predicción, el mapa no explicaba la decisión.');
+    if(s.patches.length&&!lv&&!dv)msg.append(h('div',{style:'margin-top:4px'},'Observa: aun sin evidencia, el mapa normalizado siempre muestra alguna zona "caliente".'));C.draw()}
+  upd();
+  return wrapLab(h('div',{class:'presets'},h('span',{class:'lbl'},'Modelo'),seg([['good','Mira el daño'],['logo','Aprendió un atajo: el logo']],s.model,v=>{s.model=v;upd()})),
+    h('div',{class:'presets'},h('span',{class:'lbl'},'Capa'),seg([['layer2','layer2 · 28×28'],['layer3','layer3 · 14×14'],['layer4','layer4[-1] · 7×7'],['fc','fc']],s.layer,v=>{s.layer=v;upd()})),
+    h('div',{class:'ctrls'},slider('Transparencia del mapa',{min:0,max:.9,step:.05,value:.45,fmt:v=>num(v,2),oninput:v=>{s.alpha=v;C.draw()}}),btn('Quitar parches',()=>{s.patches=[];upd()})),
+    h('div',{class:'split'},C.c,h('div',{style:'display:grid;gap:10px;min-width:0'},h('div',{class:'stats'},sP,sPr),msg,
+      h('p',{class:'note'},'Grad-CAM muestra dónde se concentran activaciones ponderadas por gradiente en una capa. Es una correlación con la salida, no una prueba de causa: zonas calientes pueden ser atajos (logo, fondo, sombra), la resolución es gruesa (7×7) y el mapa siempre se normaliza a 0–1.'))));
+};
+
+/* ---------- Hooks de Grad-CAM ---------- */
+LABS.hooks=()=>{
+  const STEPS=['Se registra un forward hook en layer4[-1].','Forward: el hook guarda las activaciones A de esa capa, shape [1, 512, 7, 7].','Sobre esa misma salida se registra un hook de gradiente (output.register_hook).','Se elige el logit de la clase y score.backward(): el hook guarda ∂score/∂A, también [1, 512, 7, 7].','α = promedio espacial de los gradientes por canal → [1, 512, 1, 1]: cuánto importa cada canal.','CAM = ReLU(Σ αₖ·Aₖ) → mapa [7, 7]. ReLU deja solo la evidencia a favor de la clase.','Se normaliza a 0–1, se interpola a 224×224 y se superpone a la imagen. handle.remove() limpia el hook.'];
+  const LINES=[['def forward_hook(module, inputs, output):',1],['    storage["activations"] = output',1],['    output.register_hook(',2],['        lambda grad: storage.__setitem__("gradients", grad))',3],['handle = target_layer.register_forward_hook(forward_hook)',0],['logits = model(x)',1],['score = logits[0, target_class]',3],['score.backward()',3],['alpha = grads.mean(dim=(2, 3), keepdim=True)',4],['cam = (alpha * acts).sum(dim=1, keepdim=True)',5],['cam = torch.relu(cam)[0, 0]',5],['cam = cam / (cam.max() + 1e-8)',6],['handle.remove()',6]];
+  let st=0,timer=null;const code=codeBlock(LINES.map(l=>l[0]));const txt=h('div',{class:'callout info'});const C=cv(.5,330,230);
+  const K=6,n=7;const r=mulberry(77);const Aa=[],Gg=[],al=[];for(let k=0;k<K;k++){const cx=r()*6,cy=r()*6,amp=.5+r();const a=[],g=[];const sg=(r()-.35)*1.4;for(let i=0;i<n;i++)for(let j=0;j<n;j++){a.push(amp*Math.exp(-((i-cy)**2+(j-cx)**2)/4)+.1*r());g.push(sg+.25*(r()-.5))}Aa.push(a);Gg.push(g);al.push(g.reduce((x,y)=>x+y,0)/g.length)}
+  const camV=[...Array(n*n)].map((_,i)=>Math.max(0,Aa.reduce((s2,a,k)=>s2+al[k]*a[i],0)));const cmx=Math.max(...camV);
+  const grid=(ctx,x,y,sz,vals,lo,hi,div)=>{const c=sz/n;for(let i=0;i<n;i++)for(let j=0;j<n;j++){const v=(vals[i*n+j]-lo)/(hi-lo);let col;if(div){const t=clamp(vals[i*n+j]/hi,-1,1);col=t>=0?A(T.c2,.15+.8*t):A(T.accent,.15+.8*-t)}else{const[r2,g,b]=cmap(clamp(v,0,1));col=`rgb(${r2|0},${g|0},${b|0})`}ctx.fillStyle=col;ctx.fillRect(x+j*c,y+i*c,c-.5,c-.5)}};
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const sz=Math.min(46,(w-140)/(K+2));const x0=110,gap=sz+8;const rows=[30,30+sz+34,30+2*(sz+34)];
+    const show=(k,y,lab)=>{ctx.globalAlpha=st>=k?1:.12;label(ctx,lab,10,y+sz/2,T.ink,'left','middle',FM(11,'600'));return st>=k};
+    show(1,rows[0],'A');for(let k=0;k<K;k++){ctx.globalAlpha=st>=1?1:.12;grid(ctx,x0+k*gap,rows[0],sz,Aa[k],0,1.6);}label(ctx,'…',x0+K*gap,rows[0]+sz/2,T.muted);label(ctx,'activaciones [512, 7, 7]',x0,rows[0]-10,T.muted);
+    show(3,rows[1],'∂y/∂A');for(let k=0;k<K;k++){ctx.globalAlpha=st>=3?1:.12;grid(ctx,x0+k*gap,rows[1],sz,Gg[k],-1,1,true)}label(ctx,'gradientes [512, 7, 7]',x0,rows[1]-10,T.muted);
+    ctx.globalAlpha=st>=4?1:.12;label(ctx,'α',10,rows[2]+14,T.ink,'left','middle',FM(11,'600'));for(let k=0;k<K;k++){const v=al[k];const bh=Math.abs(v)*30;ctx.fillStyle=v>=0?T.c2:T.accent;ctx.fillRect(x0+k*gap+sz*.3,v>=0?rows[2]+20-bh:rows[2]+20,sz*.4,bh);label(ctx,num(v,2),x0+k*gap+sz/2,rows[2]+42,T.muted,'center')}
+    ctx.globalAlpha=1;const cx=Math.min(w-2*sz-30,x0+(K+1)*gap+20);if(cx>x0+K*gap){ctx.globalAlpha=st>=5?1:.12;label(ctx,'CAM 7×7',cx,rows[0]-10,T.muted);grid(ctx,cx,rows[0],sz*1.6,camV,0,cmx);
+      ctx.globalAlpha=st>=6?1:.12;label(ctx,'224×224',cx,rows[1]+sz*.6-10,T.muted);const S2=sz*1.6;drawRoof(ctx,cx,rows[1]+sz*.6,S2,S2,{logo:false});const oc=document.createElement('canvas');oc.width=n;oc.height=n;const o2=oc.getContext('2d');const id=o2.createImageData(n,n);camV.forEach((v,i)=>{const[r2,g,b]=cmap(v/cmx);id.data.set([r2,g,b,255],i*4)});o2.putImageData(id,0,0);ctx.save();ctx.globalAlpha=st>=6?.5:.06;ctx.imageSmoothingEnabled=true;ctx.drawImage(oc,cx,rows[1]+sz*.6,S2,S2);ctx.restore()}
+    ctx.globalAlpha=1};
+  function upd(){code.lines.forEach((l,i)=>l.classList.toggle('on',LINES[i][1]===st));txt.innerHTML='';txt.append(h('div',{class:'lbl'},`Paso ${st+1} de ${STEPS.length}`),h('div',{},STEPS[st]));C.draw()}
+  const playB=btn('▶ Reproducir',()=>{if(timer){clearInterval(timer);timer=null;playB.textContent='▶ Reproducir';return}st=0;upd();playB.textContent='❚❚ Pausar';timer=setInterval(()=>{if(st>=STEPS.length-1){clearInterval(timer);timer=null;playB.textContent='▶ Reproducir';return}st++;upd()},1400)},'btn primary small');
+  upd();
+  return wrapLab(h('div',{class:'presets'},btn('◀ Anterior',()=>{st=Math.max(0,st-1);upd()}),btn('Siguiente ▶',()=>{st=Math.min(STEPS.length-1,st+1);upd()}),playB),txt,h('div',{class:'split even'},C.c,code),
+    h('p',{class:'note'},'Los hooks existen porque PyTorch no guarda por defecto las salidas ni los gradientes de las capas intermedias. Con la base congelada se activa requires_grad en la imagen de entrada para que exista un grafo hasta layer4.'));
+};
+
+/* ---------- 3 → 5 clases ---------- */
+LABS.classes=()=>{
+  let K=3;const NAMES5=['Intacto','Óxido leve','Óxido severo','Abolladura','Daño crítico'];
+  const L=[['NUM_CLASSES = 3','change'],['n0, n1, n2 = int(N*0.70), int(N*0.20), N - n0 - n1','change'],['y = torch.tensor([0]*n0 + [1]*n1 + [2]*n2)','change'],['class_names = ["Intacto", "Óxido/Corrosión", "Daño crítico"]','change'],['confusion_matrix(y_true, y_pred, labels=[0, 1, 2])','change'],['cm[2, 0]   # crítico predicho como intacto','change'],['counts = torch.bincount(train_labels, minlength=NUM_CLASSES)','auto'],['model.fc = nn.Linear(in_features, NUM_CLASSES)','auto'],['criterion = nn.CrossEntropyLoss(weight=class_weights)','auto'],['preds = torch.argmax(logits, dim=1)','same'],['def run_epoch(model, loader, criterion, optimizer=None): ...','same'],['def gradcam_resnet18(model, image_tensor, target_class=None): ...','same']];
+  const code=codeBlock(L.map(l=>l[0]));const neu=h('div',{class:'neurons'}),cm=h('div'),lst=h('ul',{class:'rules'});
+  function upd(){code.lines.forEach((ln,i)=>{ln.classList.remove('bad','good');if(K>3)ln.classList.add(L[i][1]==='change'?'bad':'good')});
+    neu.innerHTML='';for(let i=0;i<K;i++)neu.append(h('div',{class:'neu',title:(K===3?CLS:NAMES5.slice(0,K))[i]},i));
+    cm.innerHTML='';const g=h('div',{class:'mini-cm',style:`grid-template-columns:repeat(${K},16px)`});for(let i=0;i<K*K;i++)g.append(h('i',{class:i%(K+1)===0?'d':''}));cm.append(g);
+    lst.innerHTML='';(K===3?[['ok','Con 3 clases todo coincide con el notebook. Sube a 5 para ver qué se rompe.']]:[['bad','Cambiar a mano: NUM_CLASSES, proporciones y etiquetas sintéticas, class_names, labels=[0, 1, 2] de la matriz y el índice de la clase crítica en cm[2, 0].'],['ok','Se adaptan solos porque usan NUM_CLASSES: bincount, la capa fc y los pesos de CrossEntropyLoss.'],['ok','Sin cambios: argmax(dim=1), run_epoch y gradcam_resnet18 no dependen del número de clases.'],['warn','Además: revisar que ninguna clase quede con 0 ejemplos en train (peso infinito) y redefinir qué errores son críticos.']]).forEach(([t,x])=>lst.append(h('li',{class:t},h('span',{class:'m'},t==='ok'?'✓':t==='warn'?'!':'✗'),h('span',{},x))))}
+  upd();
+  return wrapLab(h('div',{class:'ctrls'},slider('Estados operativos',{min:3,max:5,step:1,value:3,fmt:v=>v,oninput:v=>{K=v;upd()}})),
+    h('div',{class:'split'},code,h('div',{style:'display:grid;gap:12px;min-width:0'},h('div',{class:'lbl'},'Neuronas de salida de la fc'),neu,h('div',{class:'lbl'},'Matriz de confusión'),cm,lst)));
+};
+
+/* ---------- Usar el test para elegir ---------- */
+LABS.peek=()=>{
+  const s={K:20,n:225,seed:1};const C=cv(.42,280,190);const sT=stat('Accuracy real de todas'),sR=stat('Promedio reportado si eliges con test'),sB=stat('Sesgo optimista');let H1=[],H2=[];
+  function sim(){const r=mulberry(SEED+s.K*31+s.n+s.seed*1000);const sd=Math.sqrt(.75*.25/s.n);H1=[];H2=[];for(let t=0;t<600;t++){let mx=-1;for(let k=0;k<s.K;k++)mx=Math.max(mx,.75+sd*gauss(r));H1.push(mx);H2.push(.75+sd*gauss(r))}
+    const m=H1.reduce((a,b)=>a+b,0)/H1.length;sT.set('75,0 %');sR.set(pct(m,1),m-.75>.03?'bad':m-.75>.01?'warn':'ok');sB.set('+'+num((m-.75)*100,1)+' pts',m-.75>.03?'bad':'warn');C.draw()}
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const f={x0:14,y0:14,x1:w-14,y1:H-28};const X=lin(.6,.95,f.x0,f.x1);const bins=50,bw=.35/bins;const hist=a=>{const c=Array(bins).fill(0);a.forEach(v=>{const i=Math.floor((v-.6)/bw);if(i>=0&&i<bins)c[i]++});return c};
+    const h1=hist(H1),h2=hist(H2);const mx=Math.max(...h1,...h2);const Y=lin(0,mx*1.1,f.y1,f.y0);axes(ctx,f,X,Y,{xt:[.6,.7,.75,.8,.9],fx:v=>Math.round(v*100)+'%',xl:'accuracy reportada →'});
+    const bar=(c,col)=>c.forEach((v,i)=>{ctx.fillStyle=col;ctx.fillRect(X(.6+i*bw)+1,Y(v),X(.6+(i+1)*bw)-X(.6+i*bw)-2,Y(0)-Y(v))});bar(h2,A(T.c0,.45));bar(h1,A(T.c2,.55));
+    ctx.strokeStyle=T.ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(X(.75),f.y0);ctx.lineTo(X(.75),f.y1);ctx.stroke();label(ctx,'real 75 %',X(.75)+5,f.y0+8,T.ink)};
+  sim();
+  return wrapLab(h('div',{class:'ctrls'},slider('Configuraciones probadas sobre el test (lr, épocas, arquitectura)',{min:1,max:60,step:1,value:20,fmt:v=>v,oninput:v=>{s.K=v;sim()}}),slider('Tamaño del test',{min:50,max:2000,step:25,value:225,fmt:v=>fmtN(v),oninput:v=>{s.n=v;sim()}}),btn('Repetir simulación',()=>{s.seed++;sim()})),
+    h('div',{class:'stats'},sT,sR,sB),C.c,legend([[A(T.c0||'#2B8554',.6),'test usado una sola vez al final',1],[A(T.c2||'#C2332A',.7),'mejor de K configuraciones elegida mirando el test',1]]),
+    h('p',{class:'note'},'Todas las configuraciones valen lo mismo (75 %). Si eliges la que mejor sale en el test, eliges también la que tuvo más suerte con el ruido de ese test: el número reportado queda inflado. Para elegir se usa validación; el test se mira una vez, al final.'));
+};
+
+/* ---------- Humano en el bucle ---------- */
+LABS.hitl=()=>{
+  const s={tc:.25,tf:.7,audit:5};const N=1000;const r=mulberry(SEED+5);const data=[];
+  for(let i=0;i<N;i++){const u=r();const y=u<.7?0:u<.9?1:2;const q=.5+r()*1.3;const z=[0,1,2].map(k=>(k===y?2.4*q:0)+gauss(r)*1.1);const m=Math.max(...z);const e=z.map(v=>Math.exp(v-m));const S=e.reduce((a,b)=>a+b,0);data.push({y,p:e.map(v=>v/S)})}
+  const C=cv(.36,220,160);const sA=stat('Carga automática'),sH=stat('Revisión humana'),sR=stat('Retenidos como críticos'),sM=stat('Críticos que pasan sin revisión'),sW=stat('Carga de trabajo humana');
+  const route=d=>d.p[2]>=s.tc?2:Math.max(...d.p)<s.tf?1:0;
+  C.draw=()=>{const{ctx,w,h:H}=C;readT();ctx.clearRect(0,0,w,H);const f={x0:110,y0:16,x1:w-14,y1:H-16};const rowH=(f.y1-f.y0)/3;const cols=[T.c0,T.signal,T.c2];
+    for(let y=0;y<3;y++){const items=data.filter(d=>d.y===y);const cnt=[0,0,0];items.forEach(d=>cnt[route(d)]++);let x=f.x0;label(ctx,`real: ${CLS[y]}`,f.x0-8,f.y0+y*rowH+rowH/2,T.ink,'right');
+      cnt.forEach((c,k)=>{const ww=(f.x1-f.x0)*c/items.length;ctx.fillStyle=A(cols[k],.75);ctx.fillRect(x,f.y0+y*rowH+5,ww,rowH-10);if(ww>34)label(ctx,String(c),x+ww/2,f.y0+y*rowH+rowH/2,'#fff','center','middle',FM(11,'600'));x+=ww})}};
+  function upd(){const c=[0,0,0];let miss=0,heavy=0;data.forEach(d=>{const k=route(d);c[k]++;if(k===0&&d.y===2)miss++});const auditN=c[0]*s.audit/100;const missLeft=miss*(1-s.audit/100);
+    sA.set(pct(c[0]/N));sH.set(pct(c[1]/N));sR.set(pct(c[2]/N));sM.set(num(missLeft,1),missLeft>1?'bad':missLeft>0?'warn':'ok');sW.set(pct((c[1]+c[2]+auditN)/N),(c[1]+c[2]+auditN)/N>.4?'warn':'');C.draw()}
+  upd();
+  return wrapLab(h('div',{class:'ctrls'},slider('Si p(crítico) ≥ … → retener e inspeccionar',{min:.05,max:.9,step:.01,value:s.tc,fmt:v=>num(v,2),oninput:v=>{s.tc=v;upd()}}),slider('Si la confianza máxima < … → revisión humana',{min:.34,max:.98,step:.01,value:s.tf,fmt:v=>num(v,2),oninput:v=>{s.tf=v;upd()}}),slider('Auditoría aleatoria de cargas automáticas',{min:0,max:30,step:1,value:5,fmt:v=>v+' %',oninput:v=>{s.audit=v;upd()}})),
+    h('div',{class:'stats'},sA,sH,sR,sM,sW),C.c,legend([[A(T.c0||'#2B8554',.8),'carga automática',1],[A(T.signal||'#C97A12',.8),'revisión humana',1],[A(T.c2||'#C2332A',.8),'retención e inspección',1]]),
+    h('p',{class:'note'},'Una política razonable: (1) cualquier señal de daño crítico sobre un umbral bajo retiene el contenedor; (2) predicciones con poca confianza van a un inspector; (3) una fracción de las cargas automáticas se audita al azar; (4) las decisiones humanas se registran y vuelven como datos etiquetados; (5) se monitorean tasas por turno, cámara y clima. Baja el umbral crítico y observa cómo cambian los críticos que se escapan y la carga de trabajo.'));
+};
+
+/* ---------- Pesos de clase con fuga ---------- */
+LABS.wleak=()=>{
+  let src='train';const counts={train:[735,210,105],val:[157,46,22],test:[158,44,23]};const box=h('div'),res=h('div');
+  function upd(){box.innerHTML='';const g=h('div',{style:'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px'});
+    Object.entries(counts).forEach(([k,c])=>{const used=src==='all'||k==='train';g.append(h('div',{class:'stat'+(used&&k==='test'?' bad':''),style:used?'outline:2px solid var(--'+(k==='train'?'accent':'c2')+')':'opacity:.55'},h('div',{class:'l'},k+(used?' · leído':'')),h('div',{class:'mono',style:'font-size:13px'},c.join(' / '))))});box.append(g);
+    const c=src==='train'?counts.train:[0,1,2].map(i=>counts.train[i]+counts.val[i]+counts.test[i]);const S=c.reduce((a,b)=>a+b,0);const w=c.map(v=>S/(3*v));
+    res.innerHTML='';res.append(h('div',{class:src==='train'?'okmsg':'err'},`class_weights = [${w.map(v=>num(v,3)).join(', ')}]\n${src==='train'?'Solo se miraron etiquetas de train ✓':'Se usaron etiquetas de validación y test: información que debía quedar guardada. La diferencia numérica es pequeña, pero el principio es el mismo que mirar la pauta antes de la prueba.'}`))}
+  upd();
+  return wrapLab(h('div',{class:'presets'},h('span',{class:'lbl'},'Calcular pesos con'),seg([['train','Solo train'],['all','Todo el dataset']],'train',v=>{src=v;upd()})),box,res);
+};
+
+/* ======================= mapeo pregunta → laboratorio ======================= */
+const SNIP={
+  1:['counts = torch.bincount(train_labels, minlength=NUM_CLASSES).float()','class_weights = counts.sum() / (NUM_CLASSES * counts)','precision, recall, f1, _ = precision_recall_fscore_support(','    y_true, y_pred, average="macro", zero_division=0)'],
+  2:['IMG_SHAPE = (3, 224, 224)','image = torch.randn(IMG_SHAPE, generator=gen, dtype=torch.float32)','xb, yb = next(iter(train_loader))','print("Shape del batch de imágenes:", xb.shape)   # [32, 3, 224, 224]'],
+  3:['train_subset, val_subset, test_subset = random_split(','    base_dataset, [n_train, n_val, n_test],','    generator=split_generator)'],
+  4:['SEED = 20261006','fijar_semillas()                                   # semilla global','split_generator = torch.Generator().manual_seed(SEED)','train_subset, val_subset, test_subset = random_split(','    base_dataset, [n_train, n_val, n_test], generator=split_generator)'],
+  5:['train_transform = transforms.Compose([','    transforms.RandomHorizontalFlip(p=0.5),','    transforms.RandomRotation(degrees=10),','    transforms.Normalize(mean=mean, std=std),','])'],
+  6:['BATCH_SIZE = 32','train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,','                          num_workers=2, pin_memory=torch.cuda.is_available())'],
+  7:['model = models.resnet18(weights=weights)','# model.conv1 = Conv2d(3, 64, kernel_size=7, stride=2, padding=3)','mean = weights.transforms().mean   # estadísticas RGB de ImageNet'],
+  8:['for param in model.parameters():','    param.requires_grad = False','','if training:','    model.train()','else:','    model.eval()'],
+  9:['for param in model.parameters():','    param.requires_grad = False','model.fc = nn.Linear(in_features, NUM_CLASSES)','optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), ...)'],
+  10:['in_features = model.fc.in_features','model.fc = nn.Linear(in_features, NUM_CLASSES)'],
+  11:['class_weights = counts.sum() / (NUM_CLASSES * counts)','criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))'],
+  12:['logits = model(images)','loss = criterion(logits, labels)   # CrossEntropyLoss aplica log-softmax internamente'],
+  13:['LEARNING_RATE = 1e-3','WEIGHT_DECAY = 1e-4','optimizer = torch.optim.Adam(','    filter(lambda p: p.requires_grad, model.parameters()),','    lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)'],
+  14:['def fijar_semillas(seed=SEED):','    random.seed(seed)','    np.random.seed(seed)','    torch.manual_seed(seed)','    torch.cuda.manual_seed_all(seed)','    torch.backends.cudnn.deterministic = True','    torch.backends.cudnn.benchmark = False'],
+  15:['if training:','    optimizer.zero_grad()','logits = model(images)','loss = criterion(logits, labels)','if training:','    loss.backward()','    optimizer.step()'],
+  17:['for epoch in range(1, EPOCHS + 1):','    train_loss, train_acc = run_epoch(model, train_loader, criterion, optimizer)','    val_loss, val_acc = run_epoch(model, val_loader, criterion, optimizer=None)'],
+  19:['device = torch.device("cuda" if torch.cuda.is_available() else "cpu")','model = model.to(device)','criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))','images = images.to(device, non_blocking=True)','labels = labels.to(device, non_blocking=True)'],
+  20:['preds = torch.argmax(logits, dim=1)','correct += (preds == labels).sum().item()'],
+  21:['acc = accuracy_score(y_true, y_pred)','print(classification_report(y_true, y_pred, target_names=class_names, zero_division=0))'],
+  22:['precision, recall, f1, _ = precision_recall_fscore_support(','    y_true, y_pred, average="macro", zero_division=0)'],
+  23:['cm = confusion_matrix(y_true, y_pred, labels=[0, 1, 2])','print("Error operacional más peligroso:", cm[2, 0])'],
+  24:['model.eval()','with torch.no_grad():','    for images, labels in test_loader:','        logits = model(images.to(device))'],
+  26:['alpha = grads.mean(dim=(2, 3), keepdim=True)','cam = (alpha * acts).sum(dim=1, keepdim=True)','cam = torch.relu(cam)[0, 0]','cam = cam / (cam.max() + 1e-8)'],
+  27:['ax.imshow(img_np)','ax.imshow(cam_up, cmap="jet", alpha=0.45)'],
+  28:['target_layer = model.layer4[-1]','handle = target_layer.register_forward_hook(forward_hook)'],
+  30:['# test_loader se usa solo en el Paso 5, después de entrenar','with torch.no_grad():','    for images, labels in test_loader: ...'],
+  31:['probs = torch.softmax(logits, dim=1)        # propuesta para producción','p_critico = probs[:, 2]','confianza = probs.max(dim=1).values'],
+};
+SNIP[16]=SNIP[15];SNIP[18]=SNIP[8].slice(3);SNIP[25]=SNIP[24];SNIP[29]=['NUM_CLASSES = 3','class_names = ["Intacto", "Óxido/Corrosión", "Daño crítico"]','cm = confusion_matrix(y_true, y_pred, labels=[0, 1, 2])'];
+
+const MAP={
+  1:['metrics',{prev:.01,r0:.97,r1:.9,r2:0},'El dataset ya está en 1 % de críticos y el modelo no detecta ninguno. Mira la accuracy y luego el contador de críticos aprobados. Sube el recall crítico y compara cuánto se mueven accuracy y F1 macro.'],
+  2:['tensor',{},'Cambia a [H, W, C] y lee el error. Mueve el tamaño del batch para ver la cuarta dimensión.'],
+  3:['leak',{},'Compara la accuracy medida con partición aleatoria y con partición por contenedor. Sube el parecido entre fotos.'],
+  4:['seed',{},'Desactiva el generator, ejecuta, sube "celdas previas" a 1 y ejecuta otra vez.'],
+  5:['aug',{},'Prueba "Rotar 180°" en vista cenital y luego en cámara oblicua. Sube el zoom hasta que el daño salga del encuadre.'],
+  6:['batch',{},'Recorre batch_size de 8 a 256. Luego activa el escalado del learning rate.'],
+  7:['thermal',{},'Recorre las cuatro estrategias y compara qué pasa con los filtros de conv1.'],
+  8:['mode',{train:true},'Deja requires_grad apagado y presiona "Forward ×2" en model.train(); luego en model.eval().'],
+  9:['finetune',{},'Elige "Progresivo por épocas" y mueve la época de 1 a 12.'],
+  10:['fc',{},'Activa "a mano" y cambia a ResNet50 o MobileNetV2.'],
+  11:['cost',{cfn:100},'Pulsa "implícito en pesos por frecuencia" y después "óptimo por costo de negocio". Compara los críticos no detectados.'],
+  12:['softmax',{},'Sube el logit de la clase real hasta 6 y compara las dos curvas de pérdida.'],
+  13:['wd',{},'Mueve solo el learning rate y mira el punto de llegada. Después mueve solo weight_decay.'],
+  14:['float',{},'Presiona "Otro reparto de hilos" varias veces y mira los últimos dígitos.'],
+  15:['loop',{zg:false},'zero_grad viene desactivado: deja correr el ciclo automático. Después actívalo y reinicia.'],
+  16:['loop',{zg:true},'Usa los botones manuales en orden: forward → backward → step. Fíjate qué cambia en cada uno.'],
+  17:['curves',{},'Sube la capacidad a 5 y baja las imágenes a 300. Después agrega regularización.'],
+  18:['mode',{train:true},'Presiona "Forward ×2" en model.train() y luego en model.eval(). Observa running_mean.'],
+  19:['device',{},'Parte del error típico y mueve objetos a la GPU hasta que las tres etapas pasen.'],
+  20:['argmax',{},'Cambia entre dim=1 y dim=0 y compara la forma del resultado.'],
+  21:['metrics',{prev:.10,r0:.99,r1:.96,r2:.35},'Este es el caso de la pregunta: accuracy 92 % y recall crítico 35 %. Lee cuántos críticos se cargarían.'],
+  22:['metrics',{prev:.10,r0:.97,r1:.88,r2:.4},'Compara F1 macro con F1 weighted. Baja el recall crítico a 0: ¿cuál de las dos lo delata?'],
+  23:['metrics',{prev:.10,r0:.95,r1:.85,r2:.6,orient:true,cell:'2,0'},'La celda peligrosa está seleccionada. Cambia la convención a "Filas = predicción" y mira cómo cambia su índice.'],
+  24:['mode',{train:false,ng:true},'Activa y desactiva torch.no_grad(). Luego pasa a model.train() con no_grad activo: ¿se apaga el Dropout?'],
+  25:['shift',{},'Sube el porcentaje nocturno y mira la accuracy de producción. Luego activa el entrenamiento con imágenes nocturnas.'],
+  26:['gradcam',{model:'good'},'Toca la abolladura para taparla y mira p(crítico). Después tapa todo menos la zona caliente.'],
+  27:['gradcam',{model:'logo'},'El modelo usa el logo. Tapa el logo y observa la predicción aunque el daño siga visible.'],
+  28:['hooks',{},'Avanza paso a paso y sigue la línea de código resaltada.'],
+  29:['classes',{},'Sube los estados operativos a 5.'],
+  30:['peek',{},'Sube las configuraciones probadas y baja el tamaño del test.'],
+  31:['hitl',{},'Baja el umbral de p(crítico) y sube la confianza mínima. Busca dejar en 0 los críticos que pasan sin revisión con la menor carga humana.']
+};
+const BMAP=[['softmax',{},'Compara las dos curvas de pérdida.',['loss = criterion(logits, labels)']],['wleak',{},'Cambia a "Todo el dataset" y mira qué conjuntos se leen.',['train_labels = torch.tensor([int(base_dataset.labels[i]) for i in train_subset.indices])']],
+  ['finetune',{},'Mira la barra de forward: cruza todos los bloques aunque estén congelados.',['for param in model.parameters():','    param.requires_grad = False']],['cost',{t:.8,cfn:5},'El umbral está en 0,80: mira precision y recall del daño crítico. Bájalo de a poco.',['precision_recall_fscore_support(y_true, y_pred, average=None)']],
+  ['gradcam',{layer:'fc'},'Cambia de fc a layer4, layer3 y layer2.',['target_layer = model.layer4[-1]']],['seed',{bug:true},'Ejecuta varias veces: el bug da siempre el mismo resultado.',['fijar_semillas()']]];
+
+/* ======================= render ======================= */
+const SECTIONS=[['p1','Paso 1','Datos, desbalance y DataLoader','Tensores sintéticos, partición 70/15/15, augmentation y batch.'],['p2','Paso 2','Transfer learning','ResNet18 preentrenada, congelamiento y nueva capa fc.'],['p3','Paso 3','Pérdida, optimizador y semillas','CrossEntropyLoss con pesos, Adam, weight_decay y reproducibilidad.'],
+  ['p4','Paso 4','Entrenamiento','El ciclo zero_grad → forward → backward → step, curvas y devices.'],['p5','Paso 5','Evaluación','Accuracy, precision, recall, F1 y matriz de confusión.'],['p6','Paso 6','Grad-CAM','Hooks, mapas de activación y sus límites.'],['pf','Pipeline','Pipeline y producción','Cambios de alcance, uso del test y humano en el bucle.'],['bk','Banco','Banco adicional','Preguntas de reserva de nivel alto.']];
+const secOf=t=>{const m=/Paso (\d)/.exec(t);return m?'p'+m[1]:'pf'};
+let scores={};try{scores=JSON.parse(localStorage.getItem('u2-scores')||'{}')}catch(e){}
+const saveScores=()=>{try{localStorage.setItem('u2-scores',JSON.stringify(scores))}catch(e){}};
+
+const main=document.getElementById('main'),rail=document.getElementById('rail'),pipe=document.getElementById('pipe');
+const cards=[];
+function card(id,num,tipo,tema,q,a,peras,demo,labKey,labOpt,hint,snip){
+  const art=h('article',{class:'q',id,'data-tipo':tipo||'',})
+  const sc=h('div',{class:'score'},'Puntaje');const sbs=[0,1,2,3,4].map(v=>{const b=h('button',{type:'button','aria-pressed':String(scores[id]===v),'aria-label':`Puntaje ${v}`},v);b.addEventListener('click',()=>{if(scores[id]===v)delete scores[id];else scores[id]=v;saveScores();sbs.forEach((x,i)=>x.setAttribute('aria-pressed',String(scores[id]===i)));markRail()});return b});sc.append(...sbs);
+  art.append(h('div',{class:'qh'},h('span',{class:'qn'},num),tipo?h('span',{class:'chip '+(tipo==='Código'?'code':'trans')},tipo):null,h('span',{class:'chip'},tema),h('span',{class:'sp'}),sc),h('p',{class:'qt'},q));
+  if(hint)art.append(h('div',{class:'hint'},hint));
+  const labSlot=h('div');art.append(labSlot);
+  const ans=h('div',{class:'answers'});
+  const det=(cls,title,body)=>{const d=h('details',{class:cls},h('summary',{},title),h('div',{class:'body'},body));return d};
+  ans.append(det('ans','Respuesta esperada',h('p',{},a)));if(peras)ans.append(det('peras','Explicación con peras y manzanas',h('p',{},peras)));if(demo)ans.append(det('','Qué debe demostrar',h('p',{},demo)));if(snip)ans.append(det('','Celda del notebook relacionada',codeBlock(snip)));
+  art.append(ans);
+  cards.push({art,id,tipo,text:(q+' '+tema+' '+a).toLowerCase(),labSlot,labKey,labOpt,built:false,ans});
+  return art}
+function buildLab(c){if(c.built)return;c.built=true;try{c.labSlot.append(LABS[c.labKey](c.labOpt||{}))}catch(e){console.error(e);c.labSlot.append(h('p',{class:'note'},'No se pudo cargar este laboratorio.'))}}
+
+const bySec={};DATA.Q.forEach(q=>{(bySec[secOf(q.tema)]=bySec[secOf(q.tema)]||[]).push(q)});
+SECTIONS.forEach(([id,k,name,desc])=>{
+  const list=id==='bk'?DATA.B:(bySec[id]||[]);
+  const sec=h('section',{class:'step',id},h('div',{class:'step-h'},h('span',{class:'k'},k),h('h2',{},name),h('p',{},desc)));const cs=h('div',{class:'cards'});sec.append(cs);
+  list.forEach((q,i)=>{if(id==='bk'){const[lk,lo,hint,sn]=BMAP[i];cs.append(card('b'+(i+1),'B'+(i+1),null,q.tema,q.q,q.a,q.peras,null,lk,lo,hint,sn))}else{const[lk,lo,hint]=MAP[q.n];cs.append(card('q'+q.n,'P'+String(q.n).padStart(2,'0'),q.tipo,q.tema.replace(/^Paso \d - /,''),q.q,q.a,q.peras,q.demo,lk,lo,hint,SNIP[q.n]))}});
+  main.append(sec);
+  pipe.append(h('a',{href:'#'+id},h('span',{class:'k'},k),h('span',{class:'n'},name),h('span',{class:'c'},`${list.length} preguntas`)));
+  rail.append(h('h3',{},k+' · '+name),h('div',{class:'qs'},list.map((q,i)=>h('a',{href:'#'+(id==='bk'?'b'+(i+1):'q'+q.n),'data-id':id==='bk'?'b'+(i+1):'q'+q.n},id==='bk'?'B'+(i+1):String(q.n).padStart(2,'0')))));
+});
+function markRail(){rail.querySelectorAll('a[data-id]').forEach(a=>a.classList.toggle('scored',scores[a.dataset.id]!=null))}markRail();
+
+/* construir laboratorios de forma diferida (cerca del viewport) */
+const lio=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){const c=cards.find(c=>c.art===e.target);if(c){buildLab(c);lio.unobserve(e.target)}}}),{rootMargin:'600px'});
+cards.forEach(c=>lio.observe(c.art));
+cards.slice(0,2).forEach(buildLab);
+
+/* filtros */
+const defm=document.getElementById('defmode');const setDef=()=>cards.forEach(c=>c.ans.querySelectorAll('details').forEach(d=>{if(d.classList.contains('ans')||d.classList.contains('peras'))d.open=!defm.checked}));defm.addEventListener('change',setDef);setDef();
+let ftype='all';document.getElementById('ftype').replaceWith((()=>{const s=seg([['all','Todas'],['Código','Código'],['Transferencia','Transferencia']],'all',v=>{ftype=v;filter()});s.id='ftype';return s})());
+const search=document.getElementById('q-search');search.addEventListener('input',filter);
+function filter(){const t=search.value.trim().toLowerCase();cards.forEach(c=>{const ok=(ftype==='all'||c.tipo===ftype)&&(!t||c.text.includes(t));c.art.hidden=!ok});document.querySelectorAll('section.step').forEach(s=>{s.hidden=![...s.querySelectorAll('article.q')].some(a=>!a.hidden)})}
+document.getElementById('rand').addEventListener('click',()=>{const vis=cards.filter(c=>!c.art.hidden);if(!vis.length)return;const c=vis[Math.floor(Math.random()*vis.length)];buildLab(c);if(defm.checked)c.ans.querySelectorAll('details').forEach(d=>d.open=false);c.art.scrollIntoView({behavior:RM?'auto':'smooth',block:'start'});c.art.classList.add('flash');setTimeout(()=>c.art.classList.remove('flash'),1800)});
+
+/* tema */
+const rd=()=>{readT();redrawers.forEach(f=>f())};matchMedia('(prefers-color-scheme: dark)').addEventListener('change',rd);new MutationObserver(rd).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(rd);
+readT();
+})();
+</script>
+
+</body></html>
